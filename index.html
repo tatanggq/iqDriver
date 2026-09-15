@@ -1483,6 +1483,13 @@
     }
     const db = firebase.firestore();
 
+    // ANTI-THROTTLE BACKGROUND RESUME SYNC (Mencegah delay saat split screen di HP)
+    window.addEventListener('focus', () => {
+        db.disableNetwork().then(() => {
+            db.enableNetwork();
+        }).catch(() => {});
+    });
+
     const ADMIN_MASTER_KEY = "9922";
 
     function requestBrowserNotificationPermission() {
@@ -2409,8 +2416,8 @@
             }
         });
 
-        // REALTIME FIRESTORE LISTENER UNTUK ACTIVE ORDER (AUTO-REFRESH REALTIME)
-        db.collection("iqbike_system").doc("active_order").onSnapshot((doc) => {
+        // REALTIME FIRESTORE LISTENER DENGAN OPSI METADATA AGAR AUTO-REFRESH INSTAN TANPA REFRESH MANUAL
+        db.collection("iqbike_system").doc("active_order").onSnapshot({ includeMetadataChanges: true }, (doc) => {
             if (doc.exists) {
                 const cloudOrder = doc.data();
                 const localOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
@@ -2461,7 +2468,6 @@
                     }
                 }
 
-                // Cek order baru masuk untuk driver online
                 if (!localOrder || localOrder.id !== cloudOrder.id) {
                     if (userRole === 'driver' && isDriverOnline && cloudOrder.status === 'WAITING') {
                         playSpecificSoundChoice(getStoredSoundChoice('radar'));
@@ -2524,7 +2530,6 @@
 
             document.getElementById('driverNearbyOrderModal').style.display = 'flex';
             
-            // PERBAIKAN: Getar Panjang & Suara Radar saat Pop-up Order Terdekat Masuk
             playSpecificSoundChoice(getStoredSoundChoice('radar'));
             triggerCustomVibration('long');
             triggerSystemPushNotification("Orderan iqDriver Masuk!", `Ada pesanan dari ${order.passengerName}`);
@@ -3046,9 +3051,9 @@
 
         if (targetDriverWa) {
             const cancelMsg = `Halo iqDriver iqBike (${targetDriverWa}), mohon maaf saya *membatalkan* pesanan saya sebelumnya dengan rute:\n` +
-                            `📍 Jemput: ${order.pickup}\n` +
-                            `🏁 Tujuan: ${order.dropoff}\n` +
-                            `Terima kasih dan mohon maklum.`;
+                              `📍 Jemput: ${order.pickup}\n` +
+                              `🏁 Tujuan: ${order.dropoff}\n` +
+                              `Terima kasih dan mohon maklum.`;
             const waUrl = `whatsapp://send?phone=${targetDriverWa}&text=${encodeURIComponent(cancelMsg)}`;
             window.location.href = waUrl;
         } else {
