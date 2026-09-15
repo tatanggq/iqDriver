@@ -134,21 +134,6 @@
             gap: 4px;
         }
 
-        .btn-header-install, .btn-header-pin, .btn-header-settings {
-            background: #222;
-            color: var(--primary-green);
-            border: 1px solid #444;
-            padding: 5px 8px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            text-decoration: none;
-        }
-
         .btn-switch-role {
             background: #2a2a2a;
             color: var(--primary-green);
@@ -221,12 +206,12 @@
         .map-wrapper {
             position: relative;
             width: 100%;
-            flex: 1;
-            min-height: 260px;
+            height: 220px;
             background-color: #e5e3df;
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         .map-wrapper-full {
@@ -250,7 +235,7 @@
             transform: translate(-50%, -100%);
             z-index: 1000;
             pointer-events: none;
-            display: none;
+            display: flex;
             flex-direction: column;
             align-items: center;
         }
@@ -275,32 +260,12 @@
             filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
         }
 
-        .btn-confirm-location {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #0288d1;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-            z-index: 1001;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 6px;
-        }
-
         .btn-my-location {
             position: absolute;
-            bottom: 16px;
-            right: 16px;
-            width: 42px;
-            height: 42px;
+            bottom: 12px;
+            right: 12px;
+            width: 38px;
+            height: 38px;
             background-color: #ffffff;
             color: var(--accent-blue);
             border-radius: 50%;
@@ -325,7 +290,6 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            height: 100%;
             padding: 10px;
             gap: 8px;
         }
@@ -349,11 +313,10 @@
             justify-content: center;
             gap: 6px;
             flex-shrink: 0;
+            background-color: #eef7e8; 
+            color: #2e7d32; 
+            border: 1px solid #c8e6b8;
         }
-
-        .status-online { background-color: #eef7e8; color: #2e7d32; border: 1px solid #c8e6b8; }
-        .status-offline { background-color: #fce8e6; color: #c62828; border: 1px solid #f5c6cb; }
-        .status-busy { background-color: #fbeae8; color: #eb5757; border: 1px solid #f7c6c2; }
 
         .form-row-2cols {
             display: grid;
@@ -387,12 +350,6 @@
             background: #fff;
         }
 
-        .form-input:disabled {
-            background-color: #eaedef;
-            color: #555;
-            cursor: not-allowed;
-        }
-
         .search-results {
             position: absolute;
             top: 100%;
@@ -420,7 +377,7 @@
         .fare-card {
             background: #f8f9fa;
             border: 1px dashed var(--primary-green);
-            padding: 6px;
+            padding: 8px;
             border-radius: 8px;
             text-align: center;
             font-size: 12px;
@@ -440,22 +397,6 @@
             cursor: pointer;
         }
 
-        .btn-cancel {
-            width: 100%;
-            padding: 10px;
-            background-color: #eb5757;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
         .btn-submit {
             width: 100%;
             padding: 11px;
@@ -471,106 +412,6 @@
             justify-content: center;
             gap: 8px;
             flex-shrink: 0;
-            text-decoration: none;
-        }
-
-        .btn-history-toggle {
-            width: 100%;
-            padding: 8px;
-            background-color: #f0f2f5;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-whatsapp {
-            width: 100%;
-            padding: 10px;
-            background-color: var(--whatsapp-green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-nav-gmaps {
-            width: 100%;
-            padding: 10px;
-            background-color: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .finance-card {
-            background: #121212;
-            color: white;
-            padding: 10px 12px;
-            border-radius: 0 0 12px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        .finance-grid-3cols {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr 1fr;
-            gap: 6px;
-            background: #1e1e1e;
-            padding: 8px;
-            border-radius: 8px;
-            text-align: center;
-            align-items: center;
-        }
-
-        .clickable-finance-box {
-            cursor: pointer;
-            padding: 6px 4px;
-            border-radius: 6px;
-            background: #282828;
-        }
-
-        .net-income-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 4px;
-            border-left: 1px solid #333;
-            border-right: 1px solid #333;
-        }
-
-        .filter-select {
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid #444;
-            background: #222;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            outline: none;
         }
 
         .floating-radar-overlay {
@@ -586,23 +427,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-        }
-
-        .mini-gps-badge {
-            position: absolute;
-            bottom: 16px;
-            left: 16px;
-            background: rgba(18, 18, 18, 0.85);
-            color: #8cc63f;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            z-index: 1001;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
         .driver-control-bar {
@@ -628,16 +452,6 @@
         }
         .btn-toggle-online.online { background: #27ae60; color: #fff; }
         .btn-toggle-online.offline { background: #eb5757; color: #fff; }
-        .btn-save-wa {
-            background: var(--primary-green);
-            color: #111;
-            border: none;
-            padding: 6px 8px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -684,8 +498,8 @@
     <main class="content-area">
         <!-- PASSENGER VIEW -->
         <div id="passengerView" class="passenger-view-container" style="display: none;">
-            <div id="driverStatusBox" class="status-box status-online">
-                <i class="fa-solid fa-circle"></i> Memeriksa Status iqDriver...
+            <div id="driverStatusBox" class="status-box">
+                <i class="fa-solid fa-circle"></i> Sistem iqDriver Online & Terhubung
             </div>
 
             <div class="form-group">
@@ -725,8 +539,8 @@
 
             <div id="passengerMapWrapper" class="map-wrapper">
                 <div id="map"></div>
-                <div id="centerPinContainer" class="center-pin-container" style="display:flex;">
-                    <div id="centerPinLabel" class="center-pin-label">Geser peta untuk tentukan lokasi...</div>
+                <div id="centerPinContainer" class="center-pin-container">
+                    <div id="centerPinLabel" class="center-pin-label">Geser peta tentukan lokasi...</div>
                     <div class="center-pin-icon"><i id="centerPinGlyph" class="fa-solid fa-location-dot" style="color:#eb5757;"></i></div>
                 </div>
                 <button id="btnMyLocation" class="btn-my-location" onclick="centerToMyLocation()">
@@ -736,18 +550,18 @@
 
             <div class="form-group" style="position:relative;">
                 <label class="form-label"><i class="fa-solid fa-location-dot" style="color:#eb5757;"></i> Lokasi Penjemputan <span style="color:red">*</span></label>
-                <input type="text" id="pickupLocation" class="form-input" placeholder="Ketik nama tempat atau alamat jemput..." oninput="searchPlaces(this.value, 'jemput')">
+                <input type="text" id="pickupLocation" class="form-input" placeholder="Ketik nama tempat jemput..." oninput="searchPlaces(this.value, 'jemput')">
                 <div id="pickupSearchResults" class="search-results"></div>
             </div>
 
             <div class="form-group" style="position:relative;">
                 <label class="form-label"><i class="fa-solid fa-flag-checkered"></i> Lokasi Tujuan <span style="color:red">*</span></label>
-                <input type="text" id="dropoffLocation" class="form-input" placeholder="Ketik nama tempat atau alamat tujuan..." oninput="searchPlaces(this.value, 'tujuan')">
+                <input type="text" id="dropoffLocation" class="form-input" placeholder="Ketik nama tempat tujuan..." oninput="searchPlaces(this.value, 'tujuan')">
                 <div id="dropoffSearchResults" class="search-results"></div>
             </div>
 
             <div class="fare-card">
-                <i class="fa-solid fa-money-bill-wave"></i> Estimasi Total Ongkos: <span id="fareText" style="color: var(--primary-green-hover); font-size: 13px;">Rp 0</span>
+                <i class="fa-solid fa-money-bill-wave"></i> Estimasi Total Ongkos: <span id="fareText" style="color: var(--primary-green-hover); font-size: 14px; font-weight:800;">Rp 0</span>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:5px;">
@@ -766,9 +580,7 @@
                 <span><i class="fa-solid fa-id-badge"></i> iqDriver Online Mode</span>
                 <button id="btnToggleDriverStatus" class="btn-toggle-online online" onclick="toggleDriverStatus()">Online</button>
             </div>
-            <div id="driverMapContainer" class="map-wrapper-full" style="flex:1; position:relative;">
-                <!-- Map wrapper khusus driver -->
-            </div>
+            <div id="driverMapContainer" class="map-wrapper-full"></div>
             <div id="floatingRadarPanel" class="floating-radar-overlay" style="display:none;">
                 <span style="font-weight:800; font-size:13px;"><i class="fa-solid fa-bell" style="color:red;"></i> Orderan Masuk!</span>
                 <div id="orderListContainer"></div>
@@ -797,8 +609,8 @@
     // --- STATE VARIABLES ---
     let map;
     let activePinMode = 'jemput'; // 'jemput' atau 'tujuan'
-    let pickupCoords = null, dropoffCoords = null;
-    let pickupMarker = null, dropoffMarker = null;
+    let pickupCoords = null;
+    let dropoffCoords = null;
     let userRole = 'penumpang';
     let currentService = 'ojek';
     let isDriverOnline = true;
@@ -823,11 +635,12 @@
     function initMap() {
         map = new maplibregl.Map({
             container: 'map',
-            style: 'https://demotiles.maplibre.org/style.json', // Vector tiles style gratis standar MapLibre
+            style: 'https://demotiles.maplibre.org/style.json',
             center: [currentLng, currentLat],
             zoom: 15
         });
 
+        // Setiap kali peta digeser, perbarui titik koordinat dan hitung ulang argo secara live
         map.on('move', () => {
             if (isProgrammaticMove) return;
             const center = map.getCenter();
@@ -871,7 +684,6 @@
         }
     }
 
-    // --- SET PIN MODE (JEMPUT / TUJUAN) ---
     function setPinMode(mode) {
         activePinMode = mode;
         const btnJemput = document.getElementById('btnModeJemput');
@@ -905,15 +717,16 @@
         
         searchDebounceTimer = setTimeout(() => {
             fetchAddressName(lat, lng, activePinMode);
-        }, 350);
+        }, 300);
     }
 
     function fetchAddressName(lat, lng, mode) {
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
             .then(res => res.json())
             .then(data => {
-                const displayName = data && data.display_name ? data.display_name.split(',').slice(0, 3).join(',') : "Lokasi Peta";
-                document.getElementById('centerPinLabel').innerText = displayName.split(',')[0];
+                const displayName = data && data.display_name ? data.display_name : "Lokasi Peta";
+                const shortName = displayName.split(',').slice(0, 3).join(',');
+                document.getElementById('centerPinLabel').innerText = shortName.split(',')[0];
 
                 if (mode === 'jemput') {
                     pickupCoords = { lat, lng };
@@ -922,13 +735,14 @@
                     dropoffCoords = { lat, lng };
                     document.getElementById('dropoffLocation').value = displayName;
                 }
+                
+                // Kalkulasi argo dipanggil otomatis setiap kali posisi berubah
                 calculateFare();
             }).catch(() => {
                 document.getElementById('centerPinLabel').innerText = "Titik Koordinat";
             });
     }
 
-    // --- AUTOCOMPLETE SEARCH NAMA TEMPAT ---
     function searchPlaces(query, type) {
         const resultsBoxId = type === 'jemput' ? 'pickupSearchResults' : 'dropoffSearchResults';
         const resultsBox = document.getElementById(resultsBoxId);
@@ -952,20 +766,26 @@
                             div.onclick = () => {
                                 const lat = parseFloat(item.lat);
                                 const lon = parseFloat(item.lon);
-                                const shortName = item.display_name.split(',').slice(0, 3).join(',');
 
                                 if (type === 'jemput') {
                                     pickupCoords = { lat, lng: lon };
-                                    document.getElementById('pickupLocation').value = shortName;
+                                    document.getElementById('pickupLocation').value = item.display_name;
+                                    if (activePinMode === 'jemput') {
+                                        isProgrammaticMove = true;
+                                        map.flyTo({ center: [lon, lat], zoom: 16 });
+                                        setTimeout(() => { isProgrammaticMove = false; }, 500);
+                                    }
                                 } else {
                                     dropoffCoords = { lat, lng: lon };
-                                    document.getElementById('dropoffLocation').value = shortName;
+                                    document.getElementById('dropoffLocation').value = item.display_name;
+                                    if (activePinMode === 'tujuan') {
+                                        isProgrammaticMove = true;
+                                        map.flyTo({ center: [lon, lat], zoom: 16 });
+                                        setTimeout(() => { isProgrammaticMove = false; }, 500);
+                                    }
                                 }
 
                                 resultsBox.style.display = 'none';
-                                isProgrammaticMove = true;
-                                map.flyTo({ center: [lon, lat], zoom: 16 });
-                                setTimeout(() => { isProgrammaticMove = false; }, 500);
                                 calculateFare();
                             };
                             resultsBox.appendChild(div);
@@ -975,34 +795,34 @@
                         resultsBox.style.display = 'none';
                     }
                 }).catch(() => { resultsBox.style.display = 'none'; });
-        }, 400);
+        }, 300);
     }
 
-    // --- HITUNG ONGKOS ---
+    // --- RUMUS KALKULASI ARGO BERDASARKAN JARAK ---
     function calculateFare() {
         if (!pickupCoords || !dropoffCoords) {
-            document.getElementById('fareText').innerText = "Rp 0";
+            document.getElementById('fareText').innerText = "Rp 0 (Tentukan Jemput & Tujuan)";
             return;
         }
 
-        // Hitung jarak sederhana Haversine formula
-        const R = 6371e3; // metres
+        const R = 6371e3; // Meter
         const φ1 = pickupCoords.lat * Math.PI/180;
         const φ2 = dropoffCoords.lat * Math.PI/180;
-        const Δφ = (dropoffCoords.lat-pickupCoords.lat) * Math.PI/180;
-        const Δλ = (dropoffCoords.lng-pickupCoords.lng) * Math.PI/180;
+        const Δφ = (dropoffCoords.lat - pickupCoords.lat) * Math.PI/180;
+        const Δλ = (dropoffCoords.lng - pickupCoords.lng) * Math.PI/180;
 
         const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
                   Math.cos(φ1) * Math.cos(φ2) *
                   Math.sin(Δλ/2) * Math.sin(Δλ/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const distanceMeters = R * c;
+        const distanceKm = distanceMeters / 1000;
 
         let baseFare = currentService === 'kurir' ? 11000 : 9000;
         let kmRate = currentService === 'kurir' ? 3000 : 2500;
-        let total = baseFare + Math.max(0, (distanceMeters / 1000) - 3.6) * kmRate;
+        let total = baseFare + Math.max(0, distanceKm - 3.0) * kmRate;
 
-        document.getElementById('fareText').innerText = `Rp ${Math.round(total).toLocaleString('id-ID')} (${(distanceMeters/1000).toFixed(1)} km)`;
+        document.getElementById('fareText').innerText = `Rp ${Math.round(total).toLocaleString('id-ID')} (${distanceKm.toFixed(1)} km)`;
     }
 
     function selectService(service) {
@@ -1045,13 +865,12 @@
 
         db.collection("iqbike_system").doc("active_order").set(orderData)
             .then(() => {
-                showCustomAlert("Sukses", "Pesanan berhasil dikirim ke radar iqDriver terdekat!");
+                showCustomAlert("Sukses", "Pesanan berhasil dikirim ke radar iqDriver!");
             }).catch(err => {
                 showCustomAlert("Error", "Gagal mengirim pesanan: " + err.message);
             });
     }
 
-    // --- ROLE SWITCHING ---
     function selectUserRole(role) {
         userRole = role;
         document.getElementById('loginOverlay').style.display = 'none';
