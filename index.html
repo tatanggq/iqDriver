@@ -2409,7 +2409,7 @@
             }
         });
 
-        // REALTIME FIRESTORE LISTENER UNTUK ACTIVE ORDER (AUTO-REFRESH HYBRID)
+        // REALTIME FIRESTORE LISTENER UNTUK ACTIVE ORDER (AUTO-REFRESH REALTIME)
         db.collection("iqbike_system").doc("active_order").onSnapshot((doc) => {
             if (doc.exists) {
                 const cloudOrder = doc.data();
@@ -2524,6 +2524,7 @@
 
             document.getElementById('driverNearbyOrderModal').style.display = 'flex';
             
+            // PERBAIKAN: Getar Panjang & Suara Radar saat Pop-up Order Terdekat Masuk
             playSpecificSoundChoice(getStoredSoundChoice('radar'));
             triggerCustomVibration('long');
             triggerSystemPushNotification("Orderan iqDriver Masuk!", `Ada pesanan dari ${order.passengerName}`);
@@ -3045,9 +3046,9 @@
 
         if (targetDriverWa) {
             const cancelMsg = `Halo iqDriver iqBike (${targetDriverWa}), mohon maaf saya *membatalkan* pesanan saya sebelumnya dengan rute:\n` +
-                              `📍 Jemput: ${order.pickup}\n` +
-                              `🏁 Tujuan: ${order.dropoff}\n` +
-                              `Terima kasih dan mohon maklum.`;
+                            `📍 Jemput: ${order.pickup}\n` +
+                            `🏁 Tujuan: ${order.dropoff}\n` +
+                            `Terima kasih dan mohon maklum.`;
             const waUrl = `whatsapp://send?phone=${targetDriverWa}&text=${encodeURIComponent(cancelMsg)}`;
             window.location.href = waUrl;
         } else {
