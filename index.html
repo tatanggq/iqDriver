@@ -1483,7 +1483,6 @@
     }
     const db = firebase.firestore();
 
-    // ANTI-THROTTLE BACKGROUND RESUME SYNC (Mencegah delay saat split screen di HP)
     window.addEventListener('focus', () => {
         db.disableNetwork().then(() => {
             db.enableNetwork();
@@ -2416,7 +2415,6 @@
             }
         });
 
-        // REALTIME FIRESTORE LISTENER DENGAN OPSI METADATA AGAR AUTO-REFRESH INSTAN TANPA REFRESH MANUAL
         db.collection("iqbike_system").doc("active_order").onSnapshot({ includeMetadataChanges: true }, (doc) => {
             if (doc.exists) {
                 const cloudOrder = doc.data();
