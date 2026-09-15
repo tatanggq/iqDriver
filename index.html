@@ -2409,7 +2409,7 @@
             }
         });
 
-        // REALTIME FIRESTORE LISTENER UNTUK ACTIVE ORDER (AUTO-REFRESH TANPA MANUAL REFRESH)
+        // REALTIME FIRESTORE LISTENER UNTUK ACTIVE ORDER (AUTO-REFRESH HYBRID)
         db.collection("iqbike_system").doc("active_order").onSnapshot((doc) => {
             if (doc.exists) {
                 const cloudOrder = doc.data();
