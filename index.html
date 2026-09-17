@@ -1699,8 +1699,8 @@
         generatedOtpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
         const otpMessage = `🔐 *KODE VERIFIKASI iqBike*\n\n` +
-                          `Kode OTP rahasia Anda adalah: *${generatedOtpCode}*\n\n` +
-                          `Masukkan kode ini ke aplikasi iqBike untuk melanjutkan verifikasi nomor WhatsApp Anda.`;
+                           `Kode OTP rahasia Anda adalah: *${generatedOtpCode}*\n\n` +
+                           `Masukkan kode ini ke aplikasi iqBike untuk melanjutkan verifikasi nomor WhatsApp Anda.`;
 
         const waUrl = `whatsapp://send?phone=${tempTargetPhone}&text=${encodeURIComponent(otpMessage)}`;
 
