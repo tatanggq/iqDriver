@@ -2497,14 +2497,20 @@
                     playSpecificSoundChoice(getStoredSoundChoice('other'));
                     triggerCustomVibration('short');
                 }
-            } else {
+          } else {
                 const localOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
                 if (localOrder) {
                     localStorage.removeItem('iqbike_active_order');
                 }
             }
-            updatePassengerAppUI();
-            updateDriverAppUI();
+            
+            // Pastikan kedua fungsi UI langsung dipanggil instan secara reaktif
+            if (typeof updatePassengerAppUI === 'function') {
+                updatePassengerAppUI();
+            }
+            if (typeof updateDriverAppUI === 'function') {
+                updateDriverAppUI();
+            }
         });
     }
 
