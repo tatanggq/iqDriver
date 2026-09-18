@@ -1442,13 +1442,16 @@
 
 <script>
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('ServiceWorker registered:', reg.scope))
-                .catch(err => console.log('ServiceWorker registration failed:', err));
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js') // Gunakan relative path './sw.js' agar aman di subfolder
+        .then((reg) => {
+            console.log('ServiceWorker registered scope: ', reg.scope);
+        })
+        .catch((err) => {
+            console.log('ServiceWorker registration failed: ', err);
         });
-    }
-
+    });
+}
     const firebaseConfig = {
         apiKey: "AIzaSyDQ9CLzERjKUz6ptZYQitr280q38b0LMb0",
         authDomain: "iqbike-1.firebaseapp.com",
