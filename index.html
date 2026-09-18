@@ -3903,9 +3903,25 @@
         setTimeout(() => { if (map) map.invalidateSize(); }, 200);
     }
 
-    window.onload = function() {
-        initMap();
-        ensureDriverCloudPresence();
+    // --- TAMBAHAN AUTO-SYNC ANTI-MACET SPLIT SCREEN (DRIVER) ---
+    setInterval(() => {
+        if (navigator.onLine && typeof db !== 'undefined') {
+            db.collection("iqbike_system").doc("active_order").get({ source: "server" })
+                .then((doc) => {
+                    if (doc.exists) {
+                        const cloudOrder = doc.data();
+                        const localOrderStr = localStorage.getItem('iqbike_active_order');
+                        const localOrder = localOrderStr ? JSON.parse(localOrderStr) : null;
+
+                        if (!localOrder || localOrder.status !== cloudOrder.status || localOrder.id !== cloudOrder.id) {
+                            localStorage.setItem('iqbike_active_order', JSON.stringify(cloudOrder));
+                            if (typeof updateDriverAppUI === 'function') updateDriverAppUI();
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+    }, 1500);
 
         const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
         const savedRole = localStorage.getItem('iqbike_saved_role');
