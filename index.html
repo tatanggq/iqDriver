@@ -2424,24 +2424,22 @@
         }, { merge: true }).catch(err => console.log("Sync passenger gps error:", err));
     }
 
-    function syncOrderToCloud(orderData) {
-        if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
-            let offlineQueue = JSON.parse(localStorage.getItem('iqbike_offline_queue') || '[]');
-            offlineQueue.push({ action: 'sync_order', data: orderData, time: Date.now() });
-            localStorage.setItem('iqbike_offline_queue', JSON.stringify(offlineQueue));
-            return;
-        }
-        db.collection("iqbike_system").doc("active_order").set({
-    status: "HEADING_PICKUP",
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-}, { merge: true })
-.then(() => {
-    console.log("Status berhasil disinkronkan!");
-})
-.catch((error) => {
-    console.error("Gagal sinkronisasi:", error);
-});
-
+   function syncOrderToCloud(orderData) {
+    if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
+        let offlineQueue = JSON.parse(localStorage.getItem('iqbike_offline_queue') || '[]');
+        offlineQueue.push({ action: 'sync_order', data: orderData, time: Date.now() });
+        localStorage.setItem('iqbike_offline_queue', JSON.stringify(offlineQueue));
+        return;
+    }
+    db.collection("iqbike_system").doc("active_order").set(orderData, { merge: true })
+    .then(() => {
+        console.log("Status berhasil disinkronkan!");
+    })
+    .catch((error) => {
+        console.error("Gagal sinkronisasi:", error);
+    });
+} // <--- Pastikan kurung kurawal tutup ini ada!
+    
     function removeOrderFromCloud() {
         if (driverOperatingMode === 'hybrid' && !navigator.onLine) return;
         db.collection("iqbike_system").doc("active_order").delete().catch(err => console.log("Delete order error:", err));
