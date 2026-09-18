@@ -2647,23 +2647,41 @@
     }
 
     function updatePassengerStatusBoxGlobal(anyOnline) {
-        const statusBox = document.getElementById('driverStatusBox');
-        if (!statusBox) return;
-        const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
-        
-        if (!order) {
-            if (anyOnline) {
-                statusBox.className = "status-box status-online";
-                statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Online & Siap Menerima Order`;
-            } else {
-                statusBox.className = "status-box status-offline";
-                statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Sedang Offline`;
-            }
+    const statusBox = document.getElementById('driverStatusBox');
+    if (!statusBox) return;
+    const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
+    
+    if (!order) {
+        if (anyOnline) {
+            statusBox.className = "status-box status-online";
+            statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Online & Siap Menerima Order`;
         } else {
-            statusBox.className = "status-box status-busy";
-            statusBox.innerHTML = `<i class="fa-solid fa-motorcycle"></i> Status: ${order.status === 'WAITING' ? 'Mencari & Menunggu iqDriver...' : 'iqDriver Sedang Menjalankan Pesanan'}`;
+            statusBox.className = "status-box status-offline";
+            statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Sedang Offline`;
         }
+    } else {
+        // Tampilkan status secara spesifik berdasarkan progress driver
+        statusBox.className = "status-box status-busy";
+        let detailedStatusText = "Menjalankan Pesanan";
+        let statusIcon = "fa-motorcycle";
+
+        if (order.status === 'WAITING') {
+            detailedStatusText = "Mencari & Menunggu iqDriver...";
+            statusIcon = "fa-clock";
+        } else if (order.status === 'HEADING_PICKUP') {
+            detailedStatusText = "Driver Otw Menjemput (Menuju Titik Jemput)";
+            statusIcon = "fa-location-arrow";
+        } else if (order.status === 'ARRIVED') {
+            detailedStatusText = "Driver Sudah Tiba di Titik Jemput";
+            statusIcon = "fa-location-dot";
+        } else if (order.status === 'ON_TRIP') {
+            detailedStatusText = "Driver Otw Mengantar ke Tujuan";
+            statusIcon = "fa-flag-checkered";
+        }
+
+        statusBox.innerHTML = `<i class="fa-solid ${statusIcon}"></i> Status: ${detailedStatusText}`;
     }
+}
 
     function renderAllMultiDriversOnMap(driversObj) {
         if (!map) return;
