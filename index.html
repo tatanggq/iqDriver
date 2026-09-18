@@ -1593,20 +1593,132 @@
     let currentDriverWa = localStorage.getItem('iqbike_driver_wa') || "6285934602965";
     let passengerVerifiedWa = localStorage.getItem('iqbike_passenger_wa') || "";
 
-    function selectService(serviceType) {
-        currentSelectedService = serviceType;
-        const btnOjek = document.getElementById('btnServiceOjek');
-        const btnKurir = document.getElementById('btnServiceKurir');
+    // --- MANAJEMEN STATE TERPISAH UNTUK INPUT DAN ORDER AKTIF ---
 
-        if (serviceType === 'ojek') {
-            btnOjek.className = 'btn-service active-service';
-            btnKurir.className = 'btn-service';
-        } else {
-            btnOjek.className = 'btn-service';
-            btnKurir.className = 'btn-service active-service';
-        }
-        calculateFare();
+function selectService(serviceType) {
+    currentSelectedService = serviceType;
+    const btnOjek = document.getElementById('btnServiceOjek');
+    const btnKurir = document.getElementById('btnServiceKurir');
+
+    if (serviceType === 'ojek') {
+        btnOjek.className = 'btn-service active-service';
+        btnKurir.className = 'btn-service';
+    } else {
+        btnOjek.className = 'btn-service';
+        btnKurir.className = 'btn-service active-kurir';
     }
+
+    // Refresh UI penumpang sesuai layanan yang dipilih tanpa mengganggu order layanan lain
+    updatePassengerAppUI();
+}
+
+function updatePassengerAppUI() {
+    const ojekOrder = JSON.parse(localStorage.getItem('iqbike_active_order_ojek'));
+    const kurirOrder = JSON.parse(localStorage.getItem('iqbike_active_order_kurir'));
+    
+    // Ambil order aktif yang sesuai dengan tab layanan yang sedang diklik/dipilih saat ini
+    const activeOrder = currentSelectedService === 'kurir' ? kurirOrder : ojekOrder;
+    
+    const statusBox = document.getElementById('driverStatusBox');
+    const btnSend = document.getElementById('btnSendOrder');
+    const btnCancel = document.getElementById('btnCancelOrder');
+    const serviceLabel = currentSelectedService === 'kurir' ? 'Kurir (Q-Rim)' : 'Ojek (Q-Ride)';
+
+    // Jika di tab ini TIDAK ada pesanan aktif, form siap digunakan untuk order baru
+    if (!activeOrder) {
+        statusBox.className = "status-box status-online";
+        statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Siap Menerima Order ${serviceLabel}`;
+        
+        btnSend.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Cari & Kirim Pesanan ${serviceLabel}`;
+        btnSend.disabled = false;
+        btnCancel.style.display = 'none';
+        calculateFare();
+        return;
+    }
+
+    // Jika di tab ini ADA pesanan aktif (misal Ojek sedang jalan, tapi user pindah ke Kurir untuk order baru)
+    statusBox.className = "status-box status-busy";
+    let statusText = "Menunggu iqDriver...";
+    let icon = "fa-clock";
+
+    if (activeOrder.status === 'HEADING_PICKUP') {
+        statusText = "Driver Otw Menjemput (Menuju Titik Jemput)";
+        icon = "fa-location-arrow";
+    } else if (activeOrder.status === 'ARRIVED') {
+        statusText = "Driver Sudah Tiba di Titik Jemput";
+        icon = "fa-location-dot";
+    } else if (activeOrder.status === 'ON_TRIP') {
+        statusText = "Driver Otw Mengantar ke Tujuan";
+        icon = "fa-flag-checkered";
+    }
+
+    statusBox.innerHTML = `<i class="fa-solid ${icon}"></i> Status [${serviceLabel}]: ${statusText}`;
+    document.getElementById('fareText').innerText = `Rp ${activeOrder.fare.toLocaleString('id-ID')} (${serviceLabel})`;
+
+    if (activeOrder.status === 'WAITING') {
+        btnSend.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menunggu iqDriver Menerima...`;
+        btnSend.disabled = true;
+        btnCancel.style.display = 'flex';
+    } else {
+        btnCancel.style.display = 'flex';
+        btnSend.innerHTML = `<i class="fa-brands fa-whatsapp"></i> Chat WhatsApp iqDriver (${activeOrder.assignedDriverWa || ''})`;
+        btnSend.disabled = false;
+        btnSend.style.backgroundColor = 'var(--whatsapp-green)';
+    }
+}
+
+function sendOrderToCloudRadar() {
+    const name = document.getElementById('passengerName').value.trim();
+    const pickup = document.getElementById('pickupLocation').value.trim();
+    const dropoff = document.getElementById('dropoffLocation').value.trim();
+
+    if (!pickup || !dropoff || !name) {
+        showCustomAlert("Peringatan", "Harap lengkapi Nama, Titik Jemput, dan Tujuan!");
+        return;
+    }
+
+    const orderKey = currentSelectedService === 'kurir' ? 'iqbike_active_order_kurir' : 'iqbike_active_order_ojek';
+    const cloudDoc = currentSelectedService === 'kurir' ? 'active_order_kurir' : 'active_order_ojek';
+
+    const newOrder = {
+        id: Date.now(),
+        deviceUuid: passengerDeviceUuid,
+        serviceType: currentSelectedService,
+        passengerName: name,
+        passengerPhone: document.getElementById('passengerPhone').value || "6289656076775",
+        pickup, dropoff,
+        pickupLat: pickupCoords ? pickupCoords.lat : userCurrentLat,
+        pickupLng: pickupCoords ? pickupCoords.lng : userCurrentLng,
+        dropoffLat: dropoffCoords ? dropoffCoords.lat : userCurrentLat,
+        dropoffLng: dropoffCoords ? dropoffCoords.lng : userCurrentLng,
+        fare: computedTotalFare,
+        status: 'WAITING',
+        note: document.getElementById('passengerNote').value || "-",
+        assignedDriverWa: null,
+        timestamp: Date.now()
+    };
+
+    localStorage.setItem(orderKey, JSON.stringify(newOrder));
+    db.collection("iqbike_system").doc(cloudDoc).set({
+        ...newOrder,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(() => {});
+
+    updatePassengerAppUI();
+    showCustomAlert("Sukses", `Pesanan ${currentSelectedService.toUpperCase()} berhasil dikirim!`);
+}
+
+function cancelActiveOrder() {
+    const orderKey = currentSelectedService === 'kurir' ? 'iqbike_active_order_kurir' : 'iqbike_active_order_ojek';
+    const cloudDoc = currentSelectedService === 'kurir' ? 'active_order_kurir' : 'active_order_ojek';
+
+    if (confirm(`Batalkan pesanan ${currentSelectedService.toUpperCase()} ini?`)) {
+        localStorage.removeItem(orderKey);
+        db.collection("iqbike_system").doc(cloudDoc).delete().catch(() => {});
+        resetAddressAndFare();
+        updatePassengerAppUI();
+    }
+}
 
     function ensureDriverCloudPresence() {
         if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
@@ -2434,19 +2546,28 @@
     }
 
     function listenCloudData() {
-        db.collection("iqbike_drivers").onSnapshot((snapshot) => {
-            let anyDriverOnline = false;
-            let activeDriversList = {};
+    // Listener untuk Ojek
+    db.collection("iqbike_system").doc("active_order_ojek").onSnapshot((doc) => {
+        if (doc.exists) {
+            localStorage.setItem('iqbike_active_order_ojek', JSON.stringify(doc.data()));
+        } else {
+            localStorage.removeItem('iqbike_active_order_ojek');
+        }
+        if (userRole === 'penumpang') updatePassengerAppUI();
+        if (userRole === 'driver') updateDriverAppUI();
+    });
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const waKey = doc.id;
-                activeDriversList[waKey] = data;
-
-                if (data.isOnline === true || data.mode === 'hybrid') {
-                    anyDriverOnline = true;
-                }
-            });
+    // Listener untuk Kurir
+    db.collection("iqbike_system").doc("active_order_kurir").onSnapshot((doc) => {
+        if (doc.exists) {
+            localStorage.setItem('iqbike_active_order_kurir', JSON.stringify(doc.data()));
+        } else {
+            localStorage.removeItem('iqbike_active_order_kurir');
+        }
+        if (userRole === 'penumpang') updatePassengerAppUI();
+        if (userRole === 'driver') updateDriverAppUI();
+    });
+}
 
             renderAllMultiDriversOnMap(activeDriversList);
             updatePassengerStatusBoxGlobal(anyDriverOnline);
