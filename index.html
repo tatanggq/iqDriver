@@ -3715,16 +3715,68 @@
         window.open(gmapsUrl, '_blank');
     }
 
-    function updatePassengerAppUI() {
+   function updatePassengerAppUI() {
         const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
+        const statusBox = document.getElementById('driverStatusBox');
         const btnSend = document.getElementById('btnSendOrder');
         const btnCancel = document.getElementById('btnCancelOrder');
-        const btnJemput = document.getElementById('btnModeJemput');
-        const pickupInput = document.getElementById('pickupLocation');
-        const nameInput = document.getElementById('passengerName');
-        const phoneInput = document.getElementById('passengerPhone');
-        const noteInput = document.getElementById('passengerNote');
-        const dropoffInput = document.getElementById('dropoffLocation');
+
+        if (!statusBox || !btnSend || !btnCancel) return;
+
+        if (!order) {
+            statusBox.className = "status-box status-online";
+            statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Online & Siap Menerima Order`;
+            btnSend.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Cari & Kirim Pesanan ke iqDriver`;
+            btnCancel.style.display = 'none';
+            return;
+        }
+
+        // Tampilkan Status Dinamis Detail Driver Secara Real-time di Layar Penumpang
+        statusBox.className = "status-box status-busy";
+        let statusText = "Menunggu Driver";
+        if (order.status === 'HEADING_PICKUP') statusText = "Driver Otw Menjemput (Menuju Titik Jemput)";
+        else if (order.status === 'ARRIVED') statusText = "Driver Sudah Tiba di Titik Jemput";
+        else if (order.status === 'ON_TRIP') statusText = "Driver Otw Mengantar ke Tujuan";
+
+        statusBox.innerHTML = `<i class="fa-solid fa-motorcycle"></i> Status: ${statusText}`;
+        btnCancel.style.display = 'flex';
+        btnSend.innerHTML = order.status === 'WAITING' ? `Menunggu iqDriver...` : `Chat WhatsApp Driver (${order.assignedDriverWa || '-'})`;
+    }
+
+    function updateDriverAppUI() {
+        const container = document.getElementById('orderListContainer');
+        const floatingPanel = document.getElementById('floatingRadarPanel');
+        const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
+
+        if (!container || !floatingPanel) return;
+
+        if (!order) {
+            floatingPanel.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        floatingPanel.style.display = 'flex';
+        let actionBtnHTML = '';
+
+        if (order.status === 'WAITING') {
+            actionBtnHTML = `<button class="driver-step-btn btn-accept" onclick="driverTakeOrder(${order.id})">Terima Pesanan Ini</button>`;
+        } else if (order.status === 'HEADING_PICKUP') {
+            actionBtnHTML = `<button class="driver-step-btn btn-arrived" onclick="setOrderStatus('ARRIVED')">Saya Sudah Tiba di Titik Jemput</button>`;
+        } else if (order.status === 'ARRIVED') {
+            actionBtnHTML = `<button class="driver-step-btn btn-trip" onclick="setOrderStatus('ON_TRIP')">Mulai Perjalanan (Otw Antar)</button>`;
+        } else if (order.status === 'ON_TRIP') {
+            actionBtnHTML = `<button class="driver-step-btn btn-finish" onclick="setOrderStatus('FINISHED')">Selesaikan Perjalanan</button>`;
+        }
+
+        container.innerHTML = `
+            <div class="order-card-driver">
+                <div><strong>[${(order.serviceType || 'ojek').toUpperCase()}] ${order.passengerName || 'Pelanggan'}</strong> - Rp ${(order.fare || 0).toLocaleString('id-ID')}</div>
+                <div style="font-size:11px;">Jemput: ${order.pickup || '-'}<br>Tujuan: ${order.dropoff || '-'}</div>
+                ${actionBtnHTML}
+            </div>
+        `;
+    }
 
         updatePassengerWaInputUI();
 
