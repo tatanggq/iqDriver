@@ -2432,7 +2432,7 @@
             return;
         }
         // Ganti db.collection(...).update(...) dengan .set(..., { merge: true })
-db.collection("iqbike_system").doc("active_order").set({
+        db.collection("iqbike_system").doc("active_order").set({
     status: "HEADING_PICKUP", // Sesuaikan dengan status yang ingin diubah
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
 }, { merge: true })
