@@ -3792,14 +3792,7 @@
             phoneInput.disabled = false;
             noteInput.disabled = false;
             dropoffInput.disabled = false;
-            return;
-        }
-
-        nameInput.value = order.passengerName || '';
-        phoneInput.value = order.passengerPhone || '';
-        noteInput.value = order.note !== '-' ? order.note : '';
-        pickupInput.value = order.pickup || '';
-        dropoffInput.value = order.dropoff || '';
+            }
 
         if (order.status === 'WAITING') {
             const countAccepted = order.acceptedDrivers ? order.acceptedDrivers.length : 0;
