@@ -4098,6 +4098,57 @@ function setOrderStatus(serviceType, newStatus) {
             selectUserRole('penumpang');
         }
     };
+    // --- TAMBAHKAN DI BAGIAN SKRIP DRIVER ---
+function startDriverGpsSync() {
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition((pos) => {
+            const dLat = pos.coords.latitude;
+            const dLng = pos.coords.longitude;
+            
+            // Simpan posisi driver ke state lokal & cloud jika status driver online
+            if (userRole === 'driver' && isDriverOnline) {
+                db.collection("iqbike_system").doc("driver_location").set({
+                    driverWa: currentDriverWa,
+                    lat: dLat,
+                    lng: dLng,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).catch(() => {});
+
+                updateDriverMapMarker(dLat, dLng);
+            }
+        }, null, { enableHighAccuracy: true });
+    }
+}
+
+function updateDriverMapMarker(lat, lng) {
+    if (!map) return;
+    const driverMotorIcon = L.divIcon({ 
+        html: '<i class="fa-solid fa-motorcycle" style="font-size:24px; color:var(--primary-green); background:#000; padding:6px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.3);"></i>', 
+        iconSize: [36, 36], 
+        iconAnchor: [18, 18], 
+        className: 'driver-live-marker' 
+    });
+
+    if (!window.myDriverMarker) {
+        window.myDriverMarker = L.marker([lat, lng], { icon: driverMotorIcon }).addTo(map);
+    } else {
+        window.myDriverMarker.setLatLng([lat, lng]);
+    }
+}
+    function selectUserRole(role) {
+    userRole = role;
+    document.getElementById('loginOverlay').style.display = 'none';
+    
+    if (role === 'penumpang') {
+        // ... kode penumpang ...
+    } else {
+        // ... kode driver ...
+        mountMapToContainer('driverMapContainer');
+        updateDriverAppUI();
+        renderFinanceAndHistory();
+        startDriverGpsSync(); // <-- TAMBAHKAN PEMANGGILAN INI DI SINI AGAR GPS DRIVER AKTIF
+    }
+}
 </script>
 </body>
 </html>
