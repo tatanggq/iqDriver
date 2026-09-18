@@ -1699,8 +1699,8 @@
         generatedOtpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
         const otpMessage = `🔐 *KODE VERIFIKASI iqBike*\n\n` +
-                           `Kode OTP rahasia Anda adalah: *${generatedOtpCode}*\n\n` +
-                           `Masukkan kode ini ke aplikasi iqBike untuk melanjutkan verifikasi nomor WhatsApp Anda.`;
+                          `Kode OTP rahasia Anda adalah: *${generatedOtpCode}*\n\n` +
+                          `Masukkan kode ini ke aplikasi iqBike untuk melanjutkan verifikasi nomor WhatsApp Anda.`;
 
         const waUrl = `whatsapp://send?phone=${tempTargetPhone}&text=${encodeURIComponent(otpMessage)}`;
 
@@ -1911,6 +1911,7 @@
 
         startLiveGpsTracking();
         listenCloudData();
+        startAutoPollingSync(); // ⚡ Auto-polling sinkronisasi super cepat (0,5 detik)
     }
 
     function mountMapToContainer(containerId) {
@@ -2416,101 +2417,116 @@
         });
 
         db.collection("iqbike_system").doc("active_order").onSnapshot({ includeMetadataChanges: true }, (doc) => {
-            if (doc.exists) {
-                const cloudOrder = doc.data();
-                const localOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-                
-                if (userRole === 'penumpang') {
-                    const isMyOrder = (cloudOrder.deviceUuid === passengerDeviceUuid);
-                    if (!isMyOrder && cloudOrder.status === 'WAITING') {
-                        return;
-                    }
+            processCloudOrderData(doc);
+        });
+    }
+
+    // ⚡ FITUR UTAMA: Auto-Polling Sinkronisasi Super Cepat (0,5 detik / 500 ms)
+    function startAutoPollingSync() {
+        setInterval(() => {
+            db.collection("iqbike_system").doc("active_order").get({ source: "server" })
+                .then((doc) => {
+                    processCloudOrderData(doc);
+                })
+                .catch(() => {});
+        }, 500); // Polling setiap 0.5 detik (500ms)
+    }
+
+    function processCloudOrderData(doc) {
+        if (doc.exists) {
+            const cloudOrder = doc.data();
+            const localOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
+            
+            if (userRole === 'penumpang') {
+                const isMyOrder = (cloudOrder.deviceUuid === passengerDeviceUuid);
+                if (!isMyOrder && cloudOrder.status === 'WAITING') {
+                    return;
                 }
+            }
 
-                if (cloudOrder.status === 'CANCELLED_BY_PASSENGER') {
-                    if (userRole === 'driver' && (cloudOrder.assignedDriverWa === currentDriverWa || !cloudOrder.assignedDriverWa)) {
-                        if (lastNotifiedCancelId !== cloudOrder.id) {
-                            lastNotifiedCancelId = cloudOrder.id;
-                            document.getElementById('cancelModalPassName').innerText = cloudOrder.passengerName;
-                            document.getElementById('cancelModalRoute').innerText = `${cloudOrder.pickup} ➔ ${cloudOrder.dropoff}`;
-                            document.getElementById('passengerCancelledModal').style.display = 'flex';
-                            
-                            let history = JSON.parse(localStorage.getItem('iqbike_history') || '[]');
-                            if (!history.some(h => h.id === cloudOrder.id)) {
-                                const cancelTimeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                                history.unshift({
-                                    id: cloudOrder.id,
-                                    type: 'EXPENSE',
-                                    isCancelledOrder: true,
-                                    serviceType: cloudOrder.serviceType || 'ojek',
-                                    passengerName: cloudOrder.passengerName,
-                                    passengerPhone: cloudOrder.passengerPhone,
-                                    pickup: cloudOrder.pickup,
-                                    dropoff: cloudOrder.dropoff,
-                                    note: `Order Batal (${cloudOrder.passengerName})`,
-                                    amount: 0,
-                                    timestamp: Date.now(),
-                                    timeReceived: cloudOrder.timeReceived || '-',
-                                    timeCancelled: cancelTimeStr,
-                                    dateString: new Date().toLocaleDateString()
-                                });
+            if (cloudOrder.status === 'CANCELLED_BY_PASSENGER') {
+                if (userRole === 'driver' && (cloudOrder.assignedDriverWa === currentDriverWa || !cloudOrder.assignedDriverWa)) {
+                    if (lastNotifiedCancelId !== cloudOrder.id) {
+                        lastNotifiedCancelId = cloudOrder.id;
+                        document.getElementById('cancelModalPassName').innerText = cloudOrder.passengerName;
+                        document.getElementById('cancelModalRoute').innerText = `${cloudOrder.pickup} ➔ ${cloudOrder.dropoff}`;
+                        document.getElementById('passengerCancelledModal').style.display = 'flex';
+                        
+                        let history = JSON.parse(localStorage.getItem('iqbike_history') || '[]');
+                        if (!history.some(h => h.id === cloudOrder.id)) {
+                            const cancelTimeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            history.unshift({
+                                id: cloudOrder.id,
+                                type: 'EXPENSE',
+                                isCancelledOrder: true,
+                                serviceType: cloudOrder.serviceType || 'ojek',
+                                passengerName: cloudOrder.passengerName,
+                                passengerPhone: cloudOrder.passengerPhone,
+                                pickup: cloudOrder.pickup,
+                                dropoff: cloudOrder.dropoff,
+                                note: `Order Batal (${cloudOrder.passengerName})`,
+                                amount: 0,
+                                timestamp: Date.now(),
+                                timeReceived: cloudOrder.timeReceived || '-',
+                                timeCancelled: cancelTimeStr,
+                                dateString: new Date().toLocaleDateString()
+                            });
 
-                                localStorage.setItem('iqbike_history', JSON.stringify(history));
-                                renderFinanceAndHistory();
-                            }
-
-                            playSpecificSoundChoice(getStoredSoundChoice('other'));
-                            triggerCustomVibration('short');
-                            triggerSystemPushNotification("Pesanan Dibatalkan", "Penumpang membatalkan pesanan.");
+                            localStorage.setItem('iqbike_history', JSON.stringify(history));
+                            renderFinanceAndHistory();
                         }
+
+                        playSpecificSoundChoice(getStoredSoundChoice('other'));
+                        triggerCustomVibration('short');
+                        triggerSystemPushNotification("Pesanan Dibatalkan", "Penumpang membatalkan pesanan.");
                     }
                 }
+            }
 
-                if (!localOrder || localOrder.id !== cloudOrder.id) {
-                    if (userRole === 'driver' && isDriverOnline && cloudOrder.status === 'WAITING') {
-                        playSpecificSoundChoice(getStoredSoundChoice('radar'));
-                        triggerCustomVibration('long');
-                        triggerSystemPushNotification("iqDriver Radar", "Ada orderan baru di sekitar Anda!");
-                        checkAndShowNearbyOrderPopup(cloudOrder);
-                    } else if (userRole === 'penumpang' && cloudOrder.deviceUuid === passengerDeviceUuid) {
-                        playSpecificSoundChoice(getStoredSoundChoice('radar'));
-                        triggerCustomVibration('long');
-                    }
+            if (!localOrder || localOrder.id !== cloudOrder.id) {
+                if (userRole === 'driver' && isDriverOnline && cloudOrder.status === 'WAITING') {
+                    playSpecificSoundChoice(getStoredSoundChoice('radar'));
+                    triggerCustomVibration('long');
+                    triggerSystemPushNotification("iqDriver Radar", "Ada orderan baru di sekitar Anda!");
+                    checkAndShowNearbyOrderPopup(cloudOrder);
+                } else if (userRole === 'penumpang' && cloudOrder.deviceUuid === passengerDeviceUuid) {
+                    playSpecificSoundChoice(getStoredSoundChoice('radar'));
+                    triggerCustomVibration('long');
                 }
+            }
 
-                if (userRole === 'driver') {
-                    if (isDriverOnline) {
-                        checkAndShowNearbyOrderPopup(cloudOrder);
-                    }
-                    checkIfPickedByPassenger(cloudOrder);
+            if (userRole === 'driver') {
+                if (isDriverOnline) {
+                    checkAndShowNearbyOrderPopup(cloudOrder);
                 }
-                
-                localStorage.setItem('iqbike_active_order', JSON.stringify(cloudOrder));
-
-                if (userRole === 'driver' && cloudOrder.triggerPopupForDriver) {
-                    const lastChange = cloudOrder.routeChanges && cloudOrder.routeChanges.length > 0 ? cloudOrder.routeChanges[cloudOrder.routeChanges.length - 1] : null;
-                    document.getElementById('driverModalNewDest').innerText = cloudOrder.dropoff;
-                    document.getElementById('driverModalAddFare').innerText = lastChange ? `+Rp ${lastChange.extraFare.toLocaleString('id-ID')}` : `Ada Penambahan Rute`;
-                    document.getElementById('driverModalNewFare').innerText = `Rp ${cloudOrder.fare.toLocaleString('id-ID')}`;
-                    document.getElementById('driverRouteUpdateModal').style.display = 'flex';
-                    
-                    playSpecificSoundChoice(getStoredSoundChoice('other'));
-                    triggerCustomVibration('short');
-                }
-            } else {
-                const localOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-                if (localOrder) {
-                    localStorage.removeItem('iqbike_active_order');
-                }
+                checkIfPickedByPassenger(cloudOrder);
             }
             
-            if (typeof updatePassengerAppUI === 'function') {
-                updatePassengerAppUI();
+            localStorage.setItem('iqbike_active_order', JSON.stringify(cloudOrder));
+
+            if (userRole === 'driver' && cloudOrder.triggerPopupForDriver) {
+                const lastChange = cloudOrder.routeChanges && cloudOrder.routeChanges.length > 0 ? cloudOrder.routeChanges[cloudOrder.routeChanges.length - 1] : null;
+                document.getElementById('driverModalNewDest').innerText = cloudOrder.dropoff;
+                document.getElementById('driverModalAddFare').innerText = lastChange ? `+Rp ${lastChange.extraFare.toLocaleString('id-ID')}` : `Ada Penambahan Rute`;
+                document.getElementById('driverModalNewFare').innerText = `Rp ${cloudOrder.fare.toLocaleString('id-ID')}`;
+                document.getElementById('driverRouteUpdateModal').style.display = 'flex';
+                
+                playSpecificSoundChoice(getStoredSoundChoice('other'));
+                triggerCustomVibration('short');
             }
-            if (typeof updateDriverAppUI === 'function') {
-                updateDriverAppUI();
+        } else {
+            const localOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
+            if (localOrder) {
+                localStorage.removeItem('iqbike_active_order');
             }
-        });
+        }
+        
+        if (typeof updatePassengerAppUI === 'function') {
+            updatePassengerAppUI();
+        }
+        if (typeof updateDriverAppUI === 'function') {
+            updateDriverAppUI();
+        }
     }
 
     function checkAndShowNearbyOrderPopup(order) {
@@ -2760,15 +2776,15 @@
             const passengerSharlokUrl = `https://maps.google.com/?q=${passengerGps.lat},${passengerGps.lng}`;
 
             const text = `Halo iqDriver iqBike, saya mau order layanan ${activeOrder.serviceType.toUpperCase()}:\n\n` +
-                       `👤 *Nama:* ${activeOrder.passengerName}\n` +
-                       `📱 *WA Penumpang:* ${activeOrder.passengerPhone}\n` +
-                       `📍 *Jemput:* ${activeOrder.pickup}\n` +
-                       `🗺️ *Link Titik Jemput:* ${passengerSharlokUrl}\n` +
-                       `🏁 *Tujuan:* ${activeOrder.dropoff}\n` +
-                       `⏱️ *Dijemput:* Secepatnya / Instan\n` +
-                       `💰 *Estimasi Ongkos:* Rp ${activeOrder.fare.toLocaleString('id-ID')}\n` +
-                       `📝 *Catatan:* ${activeOrder.note}\n\n` +
-                       `Mohon konfirmasinya ya, terima kasih!`;
+                        `👤 *Nama:* ${activeOrder.passengerName}\n` +
+                        `📱 *WA Penumpang:* ${activeOrder.passengerPhone}\n` +
+                        `📍 *Jemput:* ${activeOrder.pickup}\n` +
+                        `🗺️ *Link Titik Jemput:* ${passengerSharlokUrl}\n` +
+                        `🏁 *Tujuan:* ${activeOrder.dropoff}\n` +
+                        `⏱️ *Dijemput:* Secepatnya / Instan\n` +
+                        `💰 *Estimasi Ongkos:* Rp ${activeOrder.fare.toLocaleString('id-ID')}\n` +
+                        `📝 *Catatan:* ${activeOrder.note}\n\n` +
+                        `Mohon konfirmasinya ya, terima kasih!`;
 
             const targetWa = activeOrder.assignedDriverWa || currentDriverWa;
             const waUrl = `whatsapp://send?phone=${targetWa}&text=${encodeURIComponent(text)}`;
