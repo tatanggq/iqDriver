@@ -3856,6 +3856,35 @@
             selectUserRole('penumpang');
         }
     };
+    // (Fungsi-fungsi lain yang sudah ada di atasnya...)
+
+    window.onload = function() {
+        initMap();
+        updatePassengerAppUI();
+        renderPassengerHistory();
+    };
+
+    // SISIPKAN KODE VISIBILITY CHANGE DI SINI:
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            console.log("Jendela aktif kembali, memaksa sinkronisasi data...");
+            db.collection("iqbike_system").doc("active_order").get({ source: "server" }).then((doc) => {
+                if (doc.exists) {
+                    localStorage.setItem('tatanggaq_active_order', JSON.stringify(doc.data()));
+                } else {
+                    localStorage.removeItem('tatanggaq_active_order');
+                }
+                if (typeof updatePassengerAppUI === 'function') {
+                    updatePassengerAppUI();
+                }
+                if (typeof fetchActiveOrders === 'function') {
+                    fetchActiveOrders();
+                }
+            }).catch((err) => {
+                console.error("Gagal sinkronisasi server:", err);
+            });
+        }
+    });
 </script>
     // Memaksa sinkronisasi instan saat layar/split screen disentuh atau kembali aktif di iqDriver
     document.addEventListener("visibilitychange", () => {
@@ -3867,6 +3896,16 @@
             }
         }
     });
+    // Memaksa sinkronisasi seketika saat layar HP di-tap/sentuh di mode split screen
+    window.addEventListener('touchstart', () => {
+        db.collection("iqbike_system").doc("active_order").get({ source: "server" }).then((doc) => {
+            if (doc.exists) {
+                localStorage.setItem('tatanggaq_active_order', JSON.stringify(doc.data()));
+                if (typeof updatePassengerAppUI === 'function') updatePassengerAppUI();
+                if (typeof fetchActiveOrders === 'function') fetchActiveOrders();
+            }
+        }).catch(() => {});
+    }, { passive: true });
 
 </body>
 </html>
