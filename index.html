@@ -2546,32 +2546,56 @@ function cancelActiveOrder() {
     }
 
     function listenCloudData() {
-    // Listener untuk Ojek
-    db.collection("iqbike_system").doc("active_order_ojek").onSnapshot((doc) => {
-        if (doc.exists) {
-            localStorage.setItem('iqbike_active_order_ojek', JSON.stringify(doc.data()));
-        } else {
-            localStorage.removeItem('iqbike_active_order_ojek');
-        }
-        if (userRole === 'penumpang') updatePassengerAppUI();
-        if (userRole === 'driver') updateDriverAppUI();
-    });
+        // Listener untuk Ojek
+        db.collection("iqbike_system").doc("active_order_ojek").onSnapshot((doc) => {
+            if (doc.exists) {
+                localStorage.setItem('iqbike_active_order_ojek', JSON.stringify(doc.data()));
+            } else {
+                localStorage.removeItem('iqbike_active_order_ojek');
+            }
+            if (userRole === 'penumpang') updatePassengerAppUI();
+            if (userRole === 'driver') updateDriverAppUI();
+        });
 
-    // Listener untuk Kurir
-    db.collection("iqbike_system").doc("active_order_kurir").onSnapshot((doc) => {
-        if (doc.exists) {
-            localStorage.setItem('iqbike_active_order_kurir', JSON.stringify(doc.data()));
-        } else {
-            localStorage.removeItem('iqbike_active_order_kurir');
-        }
-        if (userRole === 'penumpang') updatePassengerAppUI();
-        if (userRole === 'driver') updateDriverAppUI();
-    });
-}
+        // Listener untuk Kurir
+        db.collection("iqbike_system").doc("active_order_kurir").onSnapshot((doc) => {
+            if (doc.exists) {
+                localStorage.setItem('iqbike_active_order_kurir', JSON.stringify(doc.data()));
+            } else {
+                localStorage.removeItem('iqbike_active_order_kurir');
+            }
+            if (userRole === 'penumpang') updatePassengerAppUI();
+            if (userRole === 'driver') updateDriverAppUI();
+        });
+
+        // Listener untuk GPS Penumpang
+        db.collection("iqbike_system").doc("passenger_gps").onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.lat && data.lng) {
+                    localStorage.setItem('iqbike_passenger_gps', JSON.stringify({ lat: data.lat, lng: data.lng }));
+                    renderPassengerLocalMarkers();
+                }
+            }
+        });
+
+        // Listener untuk Daftar Driver Aktif di Peta
+        db.collection("iqbike_drivers").onSnapshot((snapshot) => {
+            let activeDriversList = {};
+            let anyDriverOnline = false;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                activeDriversList[doc.id] = data;
+                if (data.isOnline === true) {
+                    anyDriverOnline = true;
+                }
+            });
 
             renderAllMultiDriversOnMap(activeDriversList);
             updatePassengerStatusBoxGlobal(anyDriverOnline);
         });
+    }
 
         db.collection("iqbike_system").doc("passenger_gps").onSnapshot((doc) => {
             if (doc.exists) {
