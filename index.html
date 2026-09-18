@@ -1594,20 +1594,29 @@
     let passengerVerifiedWa = localStorage.getItem('iqbike_passenger_wa') || "";
 
     function selectService(serviceType) {
-        currentSelectedService = serviceType;
-        const btnOjek = document.getElementById('btnServiceOjek');
-        const btnKurir = document.getElementById('btnServiceKurir');
+    currentSelectedService = serviceType;
+    const btnOjek = document.getElementById('btnServiceOjek');
+    const btnKurir = document.getElementById('btnServiceKurir');
 
-        if (serviceType === 'ojek') {
-            btnOjek.className = 'btn-service active-service';
-            btnKurir.className = 'btn-service';
-        } else {
-            btnOjek.className = 'btn-service';
-            btnKurir.className = 'btn-service active-service';
-        }
-        calculateFare();
+    if (serviceType === 'ojek') {
+        btnOjek.className = 'btn-service active-service';
+        btnKurir.className = 'btn-service';
+    } else {
+        btnOjek.className = 'btn-service';
+        btnKurir.className = 'btn-service active-service';
     }
+    
+    calculateFare();
 
+    // Jika sedang ada order aktif dengan status WAITING, update jenis layanannya
+    const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
+    if (activeOrder && activeOrder.status === 'WAITING') {
+        activeOrder.serviceType = serviceType;
+        activeOrder.fare = computedTotalFare;
+        localStorage.setItem('iqbike_active_order', JSON.stringify(activeOrder));
+        syncOrderToCloud(activeOrder);
+    }
+}
     function ensureDriverCloudPresence() {
         if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
             return;
@@ -2624,18 +2633,40 @@
     }
 
     function updatePassengerStatusBoxGlobal(anyOnline) {
-        const statusBox = document.getElementById('driverStatusBox');
-        if (!statusBox) return;
-        const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
-        
-        if (!order) {
-            if (anyOnline) {
-                statusBox.className = "status-box status-online";
-                statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Online & Siap Menerima Order`;
-            } else {
-                statusBox.className = "status-box status-offline";
-                statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Sedang Offline`;
-            }
+    const statusBox = document.getElementById('driverStatusBox');
+    if (!statusBox) return;
+    const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
+    
+    if (!order) {
+        if (anyOnline) {
+            statusBox.className = "status-box status-online";
+            statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Online & Siap Menerima Order`;
+        } else {
+            statusBox.className = "status-box status-offline";
+            statusBox.innerHTML = `<i class="fa-solid fa-circle"></i> iqDriver Sedang Offline`;
+        }
+    } else {
+        statusBox.className = "status-box status-busy";
+        let detailedStatusText = "Menjalankan Pesanan";
+        let statusIcon = "fa-motorcycle";
+
+        if (order.status === 'WAITING') {
+            detailedStatusText = "Mencari & Menunggu iqDriver...";
+            statusIcon = "fa-clock";
+        } else if (order.status === 'HEADING_PICKUP') {
+            detailedStatusText = "Driver Otw Menjemput (Menuju Titik Jemput)";
+            statusIcon = "fa-location-arrow";
+        } else if (order.status === 'ARRIVED') {
+            detailedStatusText = "Driver Sudah Tiba di Titik Jemput";
+            statusIcon = "fa-location-dot";
+        } else if (order.status === 'ON_TRIP') {
+            detailedStatusText = "Driver Otw Mengantar ke Tujuan";
+            statusIcon = "fa-flag-checkered";
+        }
+
+        statusBox.innerHTML = `<i class="fa-solid ${statusIcon}"></i> Status: ${detailedStatusText}`;
+    }
+}
         } else {
             statusBox.className = "status-box status-busy";
             let detailedStatusText = "Menjalankan Pesanan";
