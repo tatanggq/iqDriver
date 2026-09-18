@@ -1584,7 +1584,7 @@
     let tempTargetPhone = "";
 
     let currentSelectedService = 'ojek';
-    let driverOperatingMode = localStorage.getItem('iqbike_driver_mode') || 'online'; // 'online' atau 'hybrid'
+    let driverOperatingMode = localStorage.getItem('iqbike_driver_mode') || 'online';
 
     let passengerDeviceUuid = localStorage.getItem('iqbike_device_uuid');
     if (!passengerDeviceUuid) {
@@ -1622,7 +1622,6 @@
 
     function ensureDriverCloudPresence() {
         if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
-            console.log("Hybrid mode offline: Skipping cloud presence update.");
             return;
         }
 
