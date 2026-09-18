@@ -2431,16 +2431,15 @@
             localStorage.setItem('iqbike_offline_queue', JSON.stringify(offlineQueue));
             return;
         }
-        // Ganti db.collection(...).update(...) dengan .set(..., { merge: true })
         db.collection("iqbike_system").doc("active_order").set({
-    status: "HEADING_PICKUP", // Sesuaikan dengan status yang ingin diubah
+    status: "HEADING_PICKUP",
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
 }, { merge: true })
 .then(() => {
-    console.log("Status berhasil diperbarui!");
+    console.log("Status berhasil disinkronkan!");
 })
 .catch((error) => {
-    console.error("Gagal memperbarui status:", error);
+    console.error("Gagal sinkronisasi:", error);
 });
 
     function removeOrderFromCloud() {
