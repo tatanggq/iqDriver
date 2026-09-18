@@ -1614,18 +1614,19 @@
     let passengerVerifiedWa = localStorage.getItem('iqbike_passenger_wa') || "";
 
     function selectService(serviceType) {
-        currentSelectedService = serviceType;
-        const btnOjek = document.getElementById('btnServiceOjek');
-        const btnKurir = document.getElementById('btnServiceKurir');
+    currentSelectedService = serviceType;
+    const btnOjek = document.getElementById('btnServiceOjek');
+    const btnKurir = document.getElementById('btnServiceKurir');
 
-        if (serviceType === 'ojek') {
-            btnOjek.className = 'btn-service active-service';
-            btnKurir.className = 'btn-service';
-        } else {
-            btnOjek.className = 'btn-service';
-            btnKurir.className = 'btn-service active-service';
-        }
-        calculateFare();
+    if (serviceType === 'ojek') {
+        btnOjek.className = 'btn-service active-service';
+        btnKurir.className = 'btn-service';
+    } else {
+        btnOjek.className = 'btn-service';
+        btnKurir.className = 'btn-service active-service';
+    }
+    calculateFare();
+}
     }
 
     function ensureDriverCloudPresence() {
