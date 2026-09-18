@@ -193,6 +193,14 @@
             border-color: var(--primary-green-hover) !important;
         }
 
+        /* KHUSUS TOMBOL / BLOK Q-RIM (WARNA BIRU DENGAN FONT PUTIH JELAS) */
+        .btn-service:nth-child(2).active-service,
+        .btn-service[onclick*="kurir"].active-service {
+            background: var(--accent-blue) !important;
+            color: #ffffff !important;
+            border-color: var(--accent-blue) !important;
+        }
+
         .pin-mode-selector {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1961,11 +1969,7 @@
     function togglePinMode(mode) {
         const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
 
-        if (mode === 'jemput' && activeOrder && activeOrder.status !== 'WAITING') {
-            showCustomAlert("Terkunci", "🔒 Lokasi Penjemputan telah TERKUNCI karena iqDriver sudah mengonfirmasi pesanan!");
-            return;
-        }
-
+        // PERBAIKAN: Penumpang TatanggaQ tetap diizinkan interaksi/mengatur titik meskipun ada order aktif
         if (currentPinMode === mode) {
             confirmLocationSelection();
             return;
@@ -2715,12 +2719,6 @@
         const query = document.getElementById(inputId).value.trim();
         const container = document.getElementById(resultsId);
 
-        const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-        if (type === 'jemput' && activeOrder && activeOrder.status !== 'WAITING') {
-            showCustomAlert("Terkunci", "🔒 Titik penjemputan sudah TERKUNCI!");
-            return;
-        }
-
         if (!query) {
             container.style.display = 'none';
             if (type === 'jemput') {
@@ -2830,12 +2828,6 @@
     }
 
     function resetAddressAndFare() {
-        const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-        if (activeOrder && activeOrder.status !== 'WAITING') {
-            showCustomAlert("Terkunci", "🔒 Tidak dapat reset rute saat perjalanan sedang berlangsung!");
-            return;
-        }
-
         document.getElementById('pickupLocation').value = '';
         document.getElementById('dropoffLocation').value = '';
         pickupCoords = null; dropoffCoords = null;
@@ -3188,12 +3180,6 @@
     }
 
     function swapRouteFromHistory(itemIndex) {
-        const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-        if (activeOrder) {
-            showCustomAlert("Peringatan", "⚠️ Tidak dapat mengubah rute saat ada pesanan aktif!");
-            return;
-        }
-
         const passHistory = JSON.parse(localStorage.getItem('iqbike_passenger_history') || '[]');
         const item = passHistory[itemIndex];
         if (!item) return;
@@ -3215,12 +3201,6 @@
     }
 
     function repeatOrderFromHistory(itemIndex) {
-        const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-        if (activeOrder) {
-            showCustomAlert("Peringatan", "⚠️ Tidak dapat mengulang pesanan saat ada pesanan aktif!");
-            return;
-        }
-
         const passHistory = JSON.parse(localStorage.getItem('iqbike_passenger_history') || '[]');
         const item = passHistory[itemIndex];
         if (!item) return;
@@ -3291,12 +3271,6 @@
                         <button class="btn-cancel" onclick="cancelActiveOrder()" style="padding:6px; font-size:11px; margin-top:2px;">
                             <i class="fa-solid fa-xmark"></i> Batalkan Pesanan Ini
                         </button>
-                    </div>
-                `;
-            } else if (activeOrder) {
-                actionButtonsHTML = `
-                    <div style="background:#fff3e0; color:#e65100; font-size:10px; font-weight:bold; padding:6px; border-radius:6px; text-align:center; margin-top:4px;">
-                        🔒 Tombol dikunci (Ada pesanan aktif lain)
                     </div>
                 `;
             } else {
@@ -3751,6 +3725,7 @@
 
         updatePassengerWaInputUI();
 
+        // PERBAIKAN: Penumpang TatanggaQ tidak dibatasi secara kaku saat order aktif, tetap fleksibel
         if (!order || (order.deviceUuid && order.deviceUuid !== passengerDeviceUuid) || order.status === 'CANCELLED_BY_PASSENGER') {
             btnSend.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Cari & Kirim Pesanan ke iqDriver`;
             btnSend.disabled = false;
@@ -3778,12 +3753,6 @@
             btnSend.disabled = false;
             btnCancel.style.display = 'flex';
         } else if (order.status !== 'WAITING') {
-            nameInput.disabled = true;
-            phoneInput.disabled = true;
-            noteInput.disabled = true;
-            pickupInput.disabled = true;
-            btnJemput.disabled = true;
-
             btnCancel.style.display = 'flex';
             btnCancel.innerHTML = `<i class="fa-solid fa-xmark"></i> Batalkan Pesanan Ini`;
             btnSend.innerHTML = `<i class="fa-brands fa-whatsapp"></i> Chat WhatsApp ke iqDriver (${order.assignedDriverWa})`;
@@ -3916,7 +3885,7 @@
             selectUserRole('penumpang');
         }
     };
-    // --- TAMBAHAN AUTO-SYNC ANTI-MACET SPLIT SCREEN ---
+
     setInterval(() => {
         if (navigator.onLine && typeof db !== 'undefined') {
             db.collection("iqbike_system").doc("active_order").get({ source: "server" })
