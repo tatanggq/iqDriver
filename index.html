@@ -193,7 +193,6 @@
             border-color: var(--primary-green-hover) !important;
         }
 
-        /* KHUSUS TOMBOL / BLOK Q-RIM (WARNA BIRU DENGAN FONT PUTIH JELAS) */
         .btn-service:nth-child(2).active-service,
         .btn-service[onclick*="kurir"].active-service {
             background: var(--accent-blue) !important;
@@ -1502,25 +1501,6 @@
         }, { passive: true });
     });
 
-    window.addEventListener('focus', () => {
-        db.disableNetwork().then(() => {
-            db.enableNetwork();
-        }).catch(() => {});
-    });
-
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-            db.disableNetwork().then(() => db.enableNetwork()).catch(() => {});
-            db.collection("iqbike_system").doc("active_order").get({ source: "server" }).then((doc) => {
-                if (doc.exists) {
-                    localStorage.setItem('iqbike_active_order', JSON.stringify(doc.data()));
-                }
-                if (typeof updatePassengerAppUI === 'function') updatePassengerAppUI();
-                if (typeof updateDriverAppUI === 'function') updateDriverAppUI();
-            }).catch(() => {});
-        }
-    });
-
     const ADMIN_MASTER_KEY = "9922";
 
     function requestBrowserNotificationPermission() {
@@ -1967,9 +1947,6 @@
     }
 
     function togglePinMode(mode) {
-        const activeOrder = JSON.parse(localStorage.getItem('iqbike_active_order'));
-
-        // PERBAIKAN: Penumpang TatanggaQ tetap diizinkan interaksi/mengatur titik meskipun ada order aktif
         if (currentPinMode === mode) {
             confirmLocationSelection();
             return;
@@ -2661,7 +2638,24 @@
             }
         } else {
             statusBox.className = "status-box status-busy";
-            statusBox.innerHTML = `<i class="fa-solid fa-motorcycle"></i> Status: ${order.status === 'WAITING' ? 'Mencari & Menunggu iqDriver...' : 'iqDriver Sedang Menjalankan Pesanan'}`;
+            let detailedStatusText = "Menjalankan Pesanan";
+            let statusIcon = "fa-motorcycle";
+
+            if (order.status === 'WAITING') {
+                detailedStatusText = "Mencari & Menunggu iqDriver...";
+                statusIcon = "fa-clock";
+            } else if (order.status === 'HEADING_PICKUP') {
+                detailedStatusText = "Driver Otw Menjemput (Menuju Titik Jemput)";
+                statusIcon = "fa-location-arrow";
+            } else if (order.status === 'ARRIVED') {
+                detailedStatusText = "Driver Sudah Tiba di Titik Jemput";
+                statusIcon = "fa-location-dot";
+            } else if (order.status === 'ON_TRIP') {
+                detailedStatusText = "Driver Otw Mengantar ke Tujuan";
+                statusIcon = "fa-flag-checkered";
+            }
+
+            statusBox.innerHTML = `<i class="fa-solid ${statusIcon}"></i> Status: ${detailedStatusText}`;
         }
     }
 
@@ -3725,7 +3719,6 @@
 
         updatePassengerWaInputUI();
 
-        // PERBAIKAN: Penumpang TatanggaQ tidak dibatasi secara kaku saat order aktif, tetap fleksibel
         if (!order || (order.deviceUuid && order.deviceUuid !== passengerDeviceUuid) || order.status === 'CANCELLED_BY_PASSENGER') {
             btnSend.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Cari & Kirim Pesanan ke iqDriver`;
             btnSend.disabled = false;
@@ -3885,39 +3878,6 @@
             selectUserRole('penumpang');
         }
     };
-
-    setInterval(() => {
-        if (navigator.onLine && typeof db !== 'undefined') {
-            db.collection("iqbike_system").doc("active_order").get({ source: "server" })
-                .then((doc) => {
-                    const localOrderStr = localStorage.getItem('iqbike_active_order');
-                    const localOrder = localOrderStr ? JSON.parse(localOrderStr) : null;
-
-                    if (doc.exists) {
-                        const cloudOrder = doc.data();
-                        if (!localOrder || localOrder.status !== cloudOrder.status || localOrder.id !== cloudOrder.id) {
-                            localStorage.setItem('iqbike_active_order', JSON.stringify(cloudOrder));
-                            if (typeof updateDriverAppUI === 'function') updateDriverAppUI();
-                        }
-                    } else {
-                        if (localOrder) {
-                            localStorage.removeItem('iqbike_active_order');
-                            if (typeof updateDriverAppUI === 'function') updateDriverAppUI();
-                        }
-                    }
-                })
-                .catch(() => {});
-        }
-    }, 1500);
-
-    ['touchstart', 'pointerdown', 'visibilitychange', 'focus'].forEach(eventType => {
-        window.addEventListener(eventType, () => {
-            if (typeof db !== 'undefined') {
-                db.disableNetwork().then(() => db.enableNetwork()).catch(() => {});
-            }
-        }, { passive: true });
-    });
-
 </script>
 </body>
 </html>
