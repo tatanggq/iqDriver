@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iqBike - Multi-Driver Cloud System</title>
+    <title>iqBike - Multi-Driver Hybrid Cloud System</title>
 
     <!-- PWA CONFIGURATION -->
     <link rel="manifest" href="manifest.json">
@@ -36,6 +36,7 @@
             --accent-blue: #0288d1;
             --accent-orange: #f2994a;
             --whatsapp-green: #25D366;
+            --hybrid-purple: #9b59b6;
         }
 
         * {
@@ -110,6 +111,7 @@
 
         .role-passenger { background: var(--primary-green); color: #111; }
         .role-driver { background: #333; color: #fff; border: 1px solid #555; }
+        .role-hybrid { background: var(--hybrid-purple); color: #fff; }
 
         .header {
             background-color: var(--bg-dark);
@@ -356,6 +358,7 @@
         .status-online { background-color: #eef7e8; color: #2e7d32; border: 1px solid #c8e6b8; }
         .status-offline { background-color: #fce8e6; color: #c62828; border: 1px solid #f5c6cb; }
         .status-busy { background-color: #fbeae8; color: #eb5757; border: 1px solid #f7c6c2; }
+        .status-hybrid { background-color: #f3e5f5; color: #8e24aa; border: 1px solid #ce93d8; }
 
         .form-row-2cols {
             display: grid;
@@ -743,6 +746,10 @@
             color: #eb5757 !important;
         }
 
+        .mini-gps-badge.hybrid {
+            color: var(--hybrid-purple) !important;
+        }
+
         .driver-control-bar {
             background: #1e1e1e;
             padding: 8px 12px;
@@ -756,9 +763,9 @@
         }
 
         .btn-toggle-online {
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             border: none;
             cursor: pointer;
@@ -766,6 +773,7 @@
         }
         .btn-toggle-online.online { background: #27ae60; color: #fff; }
         .btn-toggle-online.offline { background: #eb5757; color: #fff; }
+        .btn-toggle-online.hybrid { background: var(--hybrid-purple); color: #fff; }
 
         .btn-save-wa {
             background: var(--primary-green);
@@ -848,8 +856,11 @@
             <button class="role-btn role-passenger" onclick="selectUserRole('penumpang')">
                 <i class="fa-solid fa-user"></i> Masuk Sebagai PENUMPANG (Web/PWA)
             </button>
-            <button class="role-btn role-driver" onclick="openDriverPinModal()">
-                <i class="fa-solid fa-id-card"></i> Masuk Sebagai iqDriver (PWA)
+            <button class="role-btn role-driver" onclick="openDriverPinModal('online')">
+                <i class="fa-solid fa-id-card"></i> Masuk Sebagai iqDriver (Online Cloud)
+            </button>
+            <button class="role-btn role-hybrid" onclick="openDriverPinModal('hybrid')">
+                <i class="fa-solid fa-network-wired"></i> Masuk Sebagai iqDriver HYBRID (Offline+Cloud)
             </button>
         </div>
     </div>
@@ -940,7 +951,7 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP ORDERAN TERDEKAT KHUSUS iqDriver ONLINE -->
+    <!-- MODAL POP-UP ORDERAN TERDEKAT KHUSUS iqDriver ONLINE/HYBRID -->
     <div id="driverNearbyOrderModal" class="modal-overlay" style="display: none;">
         <div class="login-card" style="background:#fff; color:#222; text-align:left; position:relative; border:2px solid var(--primary-green);">
             <button onclick="closeDriverNearbyOrderModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; font-size:18px; color:#666; cursor:pointer; font-weight:bold;">
@@ -1053,7 +1064,7 @@
     <div id="driverPinModal" class="modal-overlay" style="display: none;">
         <div class="login-card" style="background:#222; color:#fff; text-align:center;">
             <i class="fa-solid fa-lock" style="font-size:36px; color:var(--primary-green);"></i>
-            <h3 style="margin-top:6px;">Login Mode iqDriver</h3>
+            <h3 style="margin-top:6px;" id="modalDriverTitle">Login Mode iqDriver</h3>
             <p style="font-size:11px; color:#aaa;">Masukkan PIN iqDriver Anda (Default: 8899)</p>
             
             <div class="form-group">
@@ -1240,7 +1251,7 @@
     <header class="header">
         <div class="brand-title">
             <i class="fa-solid fa-motorcycle" style="color: var(--primary-green);"></i>
-            <span>iqBike</span>
+            <span id="brandTitleText">iqBike Hybrid</span>
         </div>
         <div class="header-actions">
             <button class="btn-header-settings" onclick="openNotificationSettingsModal()">
@@ -1396,7 +1407,7 @@
                     <span style="font-weight: 800; font-size: 13px; color:#222;">
                         <i class="fa-solid fa-circle-dot" style="color:red;"></i> Orderan Masuk Realtime
                     </span>
-                    <span style="background:#8cc63f; color:#111; padding:2px 6px; border-radius:10px; font-size:10px; font-weight:bold;">
+                    <span style="background:#8cc63f; color:#111; padding:2px 6px; border-radius:10px; font-size:10px; font-weight:bold;" id="radarBadgeLabel">
                         RADAR AKTIF
                     </span>
                 </div>
@@ -1449,7 +1460,6 @@
 
     let globalAudioCtx = null;
 
-    // ⚡ Inisialisasi Audio secara otomatis di balik layar tanpa mengganggu layar driver
     function initAutoAudioContext() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1464,7 +1474,6 @@
         }
     }
 
-    // ⚡ MULTI-TRIGGER INSTANT SYNC & AUDIO UNLOCK UNTUK SPLIT-SCREEN
     ['pointerdown', 'touchstart', 'visibilitychange', 'focus'].forEach(eventType => {
         window.addEventListener(eventType, () => {
             initAutoAudioContext();
@@ -1485,7 +1494,6 @@
         }, { passive: true });
     });
 
-    // Optimasi koneksi real-time agar kebal background throttling split-screen
     window.addEventListener('focus', () => {
         db.disableNetwork().then(() => {
             db.enableNetwork();
@@ -1576,6 +1584,7 @@
     let tempTargetPhone = "";
 
     let currentSelectedService = 'ojek';
+    let driverOperatingMode = localStorage.getItem('iqbike_driver_mode') || 'online'; // 'online' atau 'hybrid'
 
     let passengerDeviceUuid = localStorage.getItem('iqbike_device_uuid');
     if (!passengerDeviceUuid) {
@@ -1612,6 +1621,11 @@
     }
 
     function ensureDriverCloudPresence() {
+        if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
+            console.log("Hybrid mode offline: Skipping cloud presence update.");
+            return;
+        }
+
         const onlineStatus = localStorage.getItem('iqbike_driver_online_status') !== 'false';
         const driverGps = JSON.parse(localStorage.getItem('iqbike_driver_gps')) || { lat: userCurrentLat, lng: userCurrentLng };
         
@@ -1620,6 +1634,7 @@
             lat: driverGps.lat,
             lng: driverGps.lng,
             isOnline: onlineStatus,
+            mode: driverOperatingMode,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true }).catch(err => console.log("Auto presence sync error:", err));
     }
@@ -1861,7 +1876,6 @@
         if (navigator.vibrate) {
             try {
                 if (vibeType === 'long') {
-                    // Pola getar panjang kuat berulang bersamaan pop-up orderan masuk
                     navigator.vibrate([500, 200, 500, 200, 800]);
                 } else {
                     navigator.vibrate(200);
@@ -1885,6 +1899,11 @@
     const driverMotorIcon = L.divIcon({
         html: '<i class="fa-solid fa-motorcycle" style="font-size:12px; color:#fff; background:#27ae60; padding:5px; border-radius:50%; border:2px solid #ffffff; box-shadow:0 2px 6px rgba(0,0,0,0.4);"></i>',
         iconSize: [24, 24], iconAnchor: [12, 12], className: 'driver-motor-icon'
+    });
+
+    const driverHybridIcon = L.divIcon({
+        html: '<i class="fa-solid fa-network-wired" style="font-size:12px; color:#fff; background:var(--hybrid-purple); padding:5px; border-radius:50%; border:2px solid #ffffff; box-shadow:0 2px 6px rgba(0,0,0,0.4);"></i>',
+        iconSize: [24, 24], iconAnchor: [12, 12], className: 'driver-hybrid-icon'
     });
 
     const driverOfflineIcon = L.divIcon({
@@ -2183,7 +2202,10 @@
         document.getElementById('loginOverlay').style.display = 'flex';
     }
 
-    function openDriverPinModal() {
+    function openDriverPinModal(mode = 'online') {
+        driverOperatingMode = mode;
+        localStorage.setItem('iqbike_driver_mode', mode);
+        document.getElementById('modalDriverTitle').innerText = mode === 'hybrid' ? "Login iqDriver HYBRID" : "Login Mode iqDriver";
         document.getElementById('inputDriverPin').value = '';
         document.getElementById('driverPinModal').style.display = 'flex';
     }
@@ -2240,7 +2262,7 @@
         localStorage.setItem('iqbike_driver_pin', newPinInput);
         showCustomAlert("Berhasil", "PIN Berhasil diperbarui! Silakan login dengan PIN Baru.");
         closeResetPinModal();
-        openDriverPinModal();
+        openDriverPinModal(driverOperatingMode);
     }
 
     function changeDriverPinDirect() {
@@ -2265,7 +2287,14 @@
         localStorage.setItem('iqbike_saved_role', role);
 
         document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('currentRoleText').innerText = (role === 'penumpang') ? 'Mode: Penumpang' : 'Mode: iqDriver';
+        
+        if (role === 'penumpang') {
+            document.getElementById('currentRoleText').innerText = 'Mode: Penumpang';
+            document.getElementById('brandTitleText').innerText = 'iqBike';
+        } else {
+            document.getElementById('currentRoleText').innerText = driverOperatingMode === 'hybrid' ? 'Mode: iqDriver HYBRID' : 'Mode: iqDriver Online';
+            document.getElementById('brandTitleText').innerText = driverOperatingMode === 'hybrid' ? 'iqDriver Hybrid' : 'iqBike Cloud';
+        }
 
         ensureDriverCloudPresence();
 
@@ -2323,9 +2352,13 @@
         const badge = document.getElementById('miniGpsBadge');
         const text = document.getElementById('gpsBadgeText');
         const btn = document.getElementById('btnToggleDriverStatus');
+        const radarBadgeLabel = document.getElementById('radarBadgeLabel');
         
         if (btn) {
-            if (online) {
+            if (driverOperatingMode === 'hybrid') {
+                btn.className = "btn-toggle-online hybrid";
+                btn.innerText = "Hybrid Mode";
+            } else if (online) {
                 btn.className = "btn-toggle-online online";
                 btn.innerText = "Online";
             } else {
@@ -2336,12 +2369,20 @@
 
         if (!badge || !text) return;
 
-        if (online) {
+        if (driverOperatingMode === 'hybrid') {
             badge.classList.remove('offline');
+            badge.classList.add('hybrid');
+            text.innerText = "GPS iqDriver HYBRID (Offline+Cloud)";
+            if (radarBadgeLabel) radarBadgeLabel.innerText = "RADAR HYBRID";
+        } else if (online) {
+            badge.classList.remove('offline', 'hybrid');
             text.innerText = "GPS iqDriver ONLINE";
+            if (radarBadgeLabel) radarBadgeLabel.innerText = "RADAR AKTIF";
         } else {
             badge.classList.add('offline');
+            badge.classList.remove('hybrid');
             text.innerText = "GPS iqDriver OFFLINE";
+            if (radarBadgeLabel) radarBadgeLabel.innerText = "RADAR MATI";
         }
     }
 
@@ -2386,6 +2427,7 @@
     }
 
     function syncPassengerGpsToCloud(pos) {
+        if (driverOperatingMode === 'hybrid' && !navigator.onLine) return;
         db.collection("iqbike_system").doc("passenger_gps").set({
             lat: pos.lat,
             lng: pos.lng,
@@ -2394,6 +2436,12 @@
     }
 
     function syncOrderToCloud(orderData) {
+        if (driverOperatingMode === 'hybrid' && !navigator.onLine) {
+            let offlineQueue = JSON.parse(localStorage.getItem('iqbike_offline_queue') || '[]');
+            offlineQueue.push({ action: 'sync_order', data: orderData, time: Date.now() });
+            localStorage.setItem('iqbike_offline_queue', JSON.stringify(offlineQueue));
+            return;
+        }
         db.collection("iqbike_system").doc("active_order").set({
             ...orderData,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2401,6 +2449,7 @@
     }
 
     function removeOrderFromCloud() {
+        if (driverOperatingMode === 'hybrid' && !navigator.onLine) return;
         db.collection("iqbike_system").doc("active_order").delete().catch(err => console.log("Delete order error:", err));
     }
 
@@ -2414,7 +2463,7 @@
                 const waKey = doc.id;
                 activeDriversList[waKey] = data;
 
-                if (data.isOnline === true) {
+                if (data.isOnline === true || data.mode === 'hybrid') {
                     anyDriverOnline = true;
                 }
             });
@@ -2440,6 +2489,18 @@
 
     function startAutoPollingSync() {
         setInterval(() => {
+            if (driverOperatingMode === 'hybrid' && navigator.onLine) {
+                let offlineQueue = JSON.parse(localStorage.getItem('iqbike_offline_queue') || '[]');
+                if (offlineQueue.length > 0) {
+                    offlineQueue.forEach(item => {
+                        if (item.action === 'sync_order') {
+                            syncOrderToCloud(item.data);
+                        }
+                    });
+                    localStorage.removeItem('iqbike_offline_queue');
+                }
+            }
+
             db.collection("iqbike_system").doc("active_order").get({ source: "server" })
                 .then((doc) => {
                     processCloudOrderData(doc);
@@ -2500,7 +2561,7 @@
             }
 
             if (!localOrder || localOrder.id !== cloudOrder.id) {
-                if (userRole === 'driver' && isDriverOnline && cloudOrder.status === 'WAITING') {
+                if (userRole === 'driver' && (isDriverOnline || driverOperatingMode === 'hybrid') && cloudOrder.status === 'WAITING') {
                     playSpecificSoundChoice(getStoredSoundChoice('radar'));
                     triggerCustomVibration('long');
                     triggerSystemPushNotification("iqDriver Radar", "Ada orderan baru di sekitar Anda!");
@@ -2512,7 +2573,7 @@
             }
 
             if (userRole === 'driver') {
-                if (isDriverOnline) {
+                if (isDriverOnline || driverOperatingMode === 'hybrid') {
                     checkAndShowNearbyOrderPopup(cloudOrder);
                 }
                 checkIfPickedByPassenger(cloudOrder);
@@ -2546,7 +2607,7 @@
     }
 
     function checkAndShowNearbyOrderPopup(order) {
-        if (!isDriverOnline || !order || order.status !== 'WAITING') return;
+        if ((!isDriverOnline && driverOperatingMode !== 'hybrid') || !order || order.status !== 'WAITING') return;
 
         if (lastNotifiedOrderId === order.id) return;
 
@@ -2565,7 +2626,6 @@
 
             document.getElementById('driverNearbyOrderModal').style.display = 'flex';
             
-            // ⚡ Getar panjang & suara langsung berbunyi real-time bersamaan munculnya pop-up
             playSpecificSoundChoice(getStoredSoundChoice('radar'));
             triggerCustomVibration('long');
             triggerSystemPushNotification("Orderan iqDriver Masuk!", `Ada pesanan dari ${order.passengerName}`);
@@ -2617,7 +2677,8 @@
             if (!dData.lat || !dData.lng) return;
 
             const isOnline = dData.isOnline === true;
-            const iconToUse = isOnline ? driverMotorIcon : driverOfflineIcon;
+            const isHybrid = dData.mode === 'hybrid';
+            const iconToUse = isHybrid ? driverHybridIcon : (isOnline ? driverMotorIcon : driverOfflineIcon);
 
             if (!driverMarkersMap[waKey]) {
                 driverMarkersMap[waKey] = L.marker([dData.lat, dData.lng], {icon: iconToUse, zIndexOffset: 1000}).addTo(map);
@@ -2793,15 +2854,15 @@
             const passengerSharlokUrl = `https://maps.google.com/?q=${passengerGps.lat},${passengerGps.lng}`;
 
             const text = `Halo iqDriver iqBike, saya mau order layanan ${activeOrder.serviceType.toUpperCase()}:\n\n` +
-                        `👤 *Nama:* ${activeOrder.passengerName}\n` +
-                        `📱 *WA Penumpang:* ${activeOrder.passengerPhone}\n` +
-                        `📍 *Jemput:* ${activeOrder.pickup}\n` +
-                        `🗺️ *Link Titik Jemput:* ${passengerSharlokUrl}\n` +
-                        `🏁 *Tujuan:* ${activeOrder.dropoff}\n` +
-                        `⏱️ *Dijemput:* Secepatnya / Instan\n` +
-                        `💰 *Estimasi Ongkos:* Rp ${activeOrder.fare.toLocaleString('id-ID')}\n` +
-                        `📝 *Catatan:* ${activeOrder.note}\n\n` +
-                        `Mohon konfirmasinya ya, terima kasih!`;
+                         `👤 *Nama:* ${activeOrder.passengerName}\n` +
+                         `📱 *WA Penumpang:* ${activeOrder.passengerPhone}\n` +
+                         `📍 *Jemput:* ${activeOrder.pickup}\n` +
+                         `🗺️ *Link Titik Jemput:* ${passengerSharlokUrl}\n` +
+                         `🏁 *Tujuan:* ${activeOrder.dropoff}\n` +
+                         `⏱️ *Dijemput:* Secepatnya / Instan\n` +
+                         `💰 *Estimasi Ongkos:* Rp ${activeOrder.fare.toLocaleString('id-ID')}\n` +
+                         `📝 *Catatan:* ${activeOrder.note}\n\n` +
+                         `Mohon konfirmasinya ya, terima kasih!`;
 
             const targetWa = activeOrder.assignedDriverWa || currentDriverWa;
             const waUrl = `whatsapp://send?phone=${targetWa}&text=${encodeURIComponent(text)}`;
@@ -3564,7 +3625,7 @@
 
                 <div class="header-box">
                     <h2>REKENING KORAN / LAPORAN PENDAPATAN iqDriver iqBike</h2>
-                    <p style="font-size: 12px; color: #555; margin: 4px 0;">Sistem Cloud Multi-Driver iqBike Resmi</p>
+                    <p style="font-size: 12px; color: #555; margin: 4px 0;">Sistem Cloud Multi-Driver iqBike Hybrid</p>
                 </div>
 
                 <div class="info-grid">
@@ -3573,7 +3634,7 @@
                         <strong>Tanggal Cetak:</strong> ${new Date().toLocaleString()}
                     </div>
                     <div style="text-align: right;">
-                        <strong>Status Akun:</strong> Aktif Terverifikasi<br>
+                        <strong>Status Akun:</strong> ${driverOperatingMode === 'hybrid' ? 'Hybrid Mode' : 'Online Cloud'}<br>
                         <strong>Mata Uang:</strong> IDR (Rupiah)
                     </div>
                 </div>
@@ -3629,7 +3690,7 @@
                 </table>
 
                 <div class="footer">
-                    Dokumen ini digenerate secara otomatis oleh sistem iqBike WebApp Cloud.
+                    Dokumen ini digenerate secara otomatis oleh sistem iqBike Hybrid WebApp Cloud.
                 </div>
             </body>
             </html>
