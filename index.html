@@ -838,16 +838,6 @@
 </head>
 <body>
 
-<!-- OVERLAY INISIALISASI AUDIO UNTUK MENGATASI BLOKIR BROWSER -->
-<div id="audioGestureOverlay" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(18,18,18,0.95); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; color:white; text-align:center;">
-    <i class="fa-solid fa-volume-high" style="font-size:52px; color:var(--primary-green); margin-bottom:14px;"></i>
-    <h2 style="font-size:20px; font-weight:800; margin-bottom:8px;">Aktifkan Sistem Suara & Getar</h2>
-    <p style="font-size:12px; color:#aaa; max-width:320px; margin-bottom:20px; line-height:1.4;">Ketuk tombol di bawah agar browser mengizinkan notifikasi suara dan getar otomatis saat orderan masuk.</p>
-    <button onclick="unlockAudioAndEnterApp()" style="padding:14px 28px; background:var(--primary-green); color:#111; border:none; border-radius:12px; font-size:14px; font-weight:bold; cursor:pointer; box-shadow:0 4px 15px rgba(140,198,63,0.4);">
-        <i class="fa-solid fa-circle-play"></i> Mulai / Masuk Aplikasi
-    </button>
-</div>
-
 <div class="app-container">
     <div id="loginOverlay" class="login-overlay" style="display: none;">
         <i class="fa-solid fa-motorcycle" style="font-size: 48px; color: var(--primary-green); margin-bottom: 12px;"></i>
@@ -1459,32 +1449,41 @@
 
     let globalAudioCtx = null;
 
-    function unlockAudioAndEnterApp() {
+    // ⚡ Inisialisasi Audio secara otomatis di balik layar tanpa mengganggu layar driver
+    function initAutoAudioContext() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            globalAudioCtx = new AudioContext();
+            if (!globalAudioCtx) {
+                globalAudioCtx = new AudioContext();
+            }
             if (globalAudioCtx.state === 'suspended') {
                 globalAudioCtx.resume();
             }
-            // Silent oscillator pulse to unlock audio hardware context
-            const osc = globalAudioCtx.createOscillator();
-            const gain = globalAudioCtx.createGain();
-            gain.gain.value = 0.001;
-            osc.connect(gain);
-            gain.connect(globalAudioCtx.destination);
-            osc.start(0);
-            osc.stop(0.05);
-
-            // Test vibration permission unlock
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
         } catch (e) {
-            console.log("Audio context unlock error:", e);
+            console.log("Auto audio context init error:", e);
         }
-
-        document.getElementById('audioGestureOverlay').style.display = 'none';
     }
+
+    // ⚡ MULTI-TRIGGER INSTANT SYNC & AUDIO UNLOCK UNTUK SPLIT-SCREEN
+    ['pointerdown', 'touchstart', 'visibilitychange', 'focus'].forEach(eventType => {
+        window.addEventListener(eventType, () => {
+            initAutoAudioContext();
+            if (document.visibilityState === 'visible' || eventType === 'pointerdown' || eventType === 'touchstart') {
+                db.disableNetwork().then(() => {
+                    return db.enableNetwork();
+                }).then(() => {
+                    return db.collection("iqbike_system").doc("active_order").get({ source: "server" });
+                }).then((doc) => {
+                    if (doc.exists) {
+                        const cloudOrder = doc.data();
+                        localStorage.setItem('iqbike_active_order', JSON.stringify(cloudOrder));
+                        if (typeof updatePassengerAppUI === 'function') updatePassengerAppUI();
+                        if (typeof updateDriverAppUI === 'function') updateDriverAppUI();
+                    }
+                }).catch(() => {});
+            }
+        }, { passive: true });
+    });
 
     // Optimasi koneksi real-time agar kebal background throttling split-screen
     window.addEventListener('focus', () => {
@@ -1862,7 +1861,7 @@
         if (navigator.vibrate) {
             try {
                 if (vibeType === 'long') {
-                    // Pola getar panjang kuat berulang untuk orderan masuk
+                    // Pola getar panjang kuat berulang bersamaan pop-up orderan masuk
                     navigator.vibrate([500, 200, 500, 200, 800]);
                 } else {
                     navigator.vibrate(200);
@@ -1929,7 +1928,7 @@
 
         startLiveGpsTracking();
         listenCloudData();
-        startAutoPollingSync(); // ⚡ Auto-polling sinkronisasi super cepat (0,5 detik)
+        startAutoPollingSync(); 
     }
 
     function mountMapToContainer(containerId) {
@@ -2439,7 +2438,6 @@
         });
     }
 
-    // ⚡ Auto-polling sinkronisasi super cepat (0,5 detik / 500 ms) kebal background throttling split-screen
     function startAutoPollingSync() {
         setInterval(() => {
             db.collection("iqbike_system").doc("active_order").get({ source: "server" })
@@ -2567,6 +2565,7 @@
 
             document.getElementById('driverNearbyOrderModal').style.display = 'flex';
             
+            // ⚡ Getar panjang & suara langsung berbunyi real-time bersamaan munculnya pop-up
             playSpecificSoundChoice(getStoredSoundChoice('radar'));
             triggerCustomVibration('long');
             triggerSystemPushNotification("Orderan iqDriver Masuk!", `Ada pesanan dari ${order.passengerName}`);
@@ -3849,26 +3848,5 @@
         }
     };
 </script>
-    // Trigger 1: Paksa sinkronisasi instan saat layar disentuh di sisi manapun (mengatasi throttling split-screen)
-['pointerdown', 'touchstart', 'visibilitychange', 'focus'].forEach(eventType => {
-    window.addEventListener(eventType, () => {
-        if (document.visibilityState === 'visible' || eventType === 'pointerdown' || eventType === 'touchstart') {
-            // Paksa Firestore memperbarui koneksi jaringan agar data langsung ditarik
-            db.disableNetwork().then(() => {
-                return db.enableNetwork();
-            }).then(() => {
-                // Ambil data dokumen aktif terbaru secara paksa dari server (bypass cache lokal)
-                return db.collection("iqbike_system").doc("active_order").get({ source: "server" });
-            }).then((doc) => {
-                if (doc.exists) {
-                    const cloudOrder = doc.data();
-                    localStorage.setItem('iqbike_active_order', JSON.stringify(cloudOrder));
-                    if (typeof updatePassengerAppUI === 'function') updatePassengerAppUI();
-                    if (typeof updateDriverAppUI === 'function') updateDriverAppUI();
-                }
-            }).catch(() => {});
-        }
-    }, { passive: true });
-});
 </body>
 </html>
