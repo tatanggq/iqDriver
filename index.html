@@ -4140,13 +4140,21 @@ function updateDriverMapMarker(lat, lng) {
     document.getElementById('loginOverlay').style.display = 'none';
     
     if (role === 'penumpang') {
-        // ... kode penumpang ...
+        document.getElementById('currentRoleText').innerText = 'Mode: Penumpang';
+        document.getElementById('brandTitleText').innerText = 'iqBike';
+        document.getElementById('passengerView').style.display = 'flex';
+        document.getElementById('driverView').style.display = 'none';
+        mountMapToContainer('passengerMapWrapper');
+        updatePassengerAppUI();
     } else {
-        // ... kode driver ...
+        document.getElementById('currentRoleText').innerText = 'Mode: iqDriver';
+        document.getElementById('brandTitleText').innerText = 'iqDriver';
+        document.getElementById('passengerView').style.display = 'none';
+        document.getElementById('driverView').style.display = 'flex';
         mountMapToContainer('driverMapContainer');
         updateDriverAppUI();
         renderFinanceAndHistory();
-        startDriverGpsSync(); // <-- TAMBAHKAN PEMANGGILAN INI DI SINI AGAR GPS DRIVER AKTIF
+        startDriverGpsSync(); // Memulai sinkronisasi GPS driver ke cloud
     }
 }
 </script>
