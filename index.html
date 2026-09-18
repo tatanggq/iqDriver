@@ -2438,38 +2438,28 @@
     }
 
     function listenCloudData() {
-        db.collection("iqbike_drivers").onSnapshot((snapshot) => {
-            let anyDriverOnline = false;
-            let activeDriversList = {};
+    // Mendengarkan pesanan Ojek secara real-time
+    db.collection("iqbike_system").doc("active_order_ojek").onSnapshot((doc) => {
+        if (doc.exists) {
+            localStorage.setItem('iqbike_active_order_ojek', JSON.stringify(doc.data()));
+        } else {
+            localStorage.removeItem('iqbike_active_order_ojek');
+        }
+        if (userRole === 'penumpang') updatePassengerAppUI();
+        if (userRole === 'driver') updateDriverAppUI();
+    });
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const waKey = doc.id;
-                activeDriversList[waKey] = data;
-
-                if (data.isOnline === true || data.mode === 'hybrid') {
-                    anyDriverOnline = true;
-                }
-            });
-
-            renderAllMultiDriversOnMap(activeDriversList);
-            updatePassengerStatusBoxGlobal(anyDriverOnline);
-        });
-
-        db.collection("iqbike_system").doc("passenger_gps").onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.lat && data.lng) {
-                    localStorage.setItem('iqbike_passenger_gps', JSON.stringify({ lat: data.lat, lng: data.lng }));
-                    renderPassengerLocalMarkers();
-                }
-            }
-        });
-
-        db.collection("iqbike_system").doc("active_order").onSnapshot({ includeMetadataChanges: true }, (doc) => {
-            processCloudOrderData(doc);
-        });
-    }
+    // Mendengarkan pesanan Kurir secara real-time
+    db.collection("iqbike_system").doc("active_order_kurir").onSnapshot((doc) => {
+        if (doc.exists) {
+            localStorage.setItem('iqbike_active_order_kurir', JSON.stringify(doc.data()));
+        } else {
+            localStorage.removeItem('iqbike_active_order_kurir');
+        }
+        if (userRole === 'penumpang') updatePassengerAppUI();
+        if (userRole === 'driver') updateDriverAppUI();
+    });
+}
 
     function startAutoPollingSync() {
         setInterval(() => {
