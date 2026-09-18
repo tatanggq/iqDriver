@@ -2667,29 +2667,7 @@
         statusBox.innerHTML = `<i class="fa-solid ${statusIcon}"></i> Status: ${detailedStatusText}`;
     }
 }
-        } else {
-            statusBox.className = "status-box status-busy";
-            let detailedStatusText = "Menjalankan Pesanan";
-            let statusIcon = "fa-motorcycle";
-
-            if (order.status === 'WAITING') {
-                detailedStatusText = "Mencari & Menunggu iqDriver...";
-                statusIcon = "fa-clock";
-            } else if (order.status === 'HEADING_PICKUP') {
-                detailedStatusText = "Driver Otw Menjemput (Menuju Titik Jemput)";
-                statusIcon = "fa-location-arrow";
-            } else if (order.status === 'ARRIVED') {
-                detailedStatusText = "Driver Sudah Tiba di Titik Jemput";
-                statusIcon = "fa-location-dot";
-            } else if (order.status === 'ON_TRIP') {
-                detailedStatusText = "Driver Otw Mengantar ke Tujuan";
-                statusIcon = "fa-flag-checkered";
-            }
-
-            statusBox.innerHTML = `<i class="fa-solid ${statusIcon}"></i> Status: ${detailedStatusText}`;
-        }
-    }
-
+    
     function renderAllMultiDriversOnMap(driversObj) {
         if (!map) return;
 
