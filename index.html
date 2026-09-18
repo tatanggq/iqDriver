@@ -3822,6 +3822,7 @@
         let actionBtnHTML = '';
         let navBtnHTML = '';
         let driverCancelBtnHTML = '';
+        let statusDescriptionText = 'Menunggu Konfirmasi Penumpang';
 
         let waBtnHTML = `
             <button class="btn-whatsapp" onclick="openPassengerWa('${order.passengerPhone}', '${order.passengerName}', '${order.assignedDriverWa}')">
@@ -3832,6 +3833,7 @@
         const isAlreadyAccepted = order.acceptedDrivers && order.acceptedDrivers.some(d => d.wa === currentDriverWa);
 
         if (order.status === 'WAITING') {
+            statusDescriptionText = 'Menunggu Pemilihan oleh Penumpang';
             if (!isAlreadyAccepted) {
                 actionBtnHTML = `
                     <button class="driver-step-btn btn-accept" onclick="driverTakeOrder(${order.id})">
@@ -3844,6 +3846,7 @@
                     </div>`;
             }
         } else if (order.status === 'HEADING_PICKUP') {
+            statusDescriptionText = '🛵 Driver Otw Menjemput Penumpang';
             navBtnHTML = `
                 <button class="btn-nav-gmaps" onclick="openGoogleMapsNav(${order.pickupLat}, ${order.pickupLng})">
                     <i class="fa-solid fa-location-arrow"></i> Navigasi Google Maps (Menuju Titik Jemput)
@@ -3857,14 +3860,20 @@
                     <i class="fa-solid fa-xmark"></i> Batalkan & Keluar dari Penanganan
                 </button>`;
         } else if (order.status === 'ARRIVED') {
+            statusDescriptionText = '📍 Driver Sudah Tiba di Titik Jemput';
+            navBtnHTML = `
+                <button class="btn-nav-gmaps" onclick="openGoogleMapsNav(${order.dropoffLat}, ${order.dropoffLng})">
+                    <i class="fa-solid fa-location-arrow"></i> Navigasi Google Maps (Menuju Tujuan)
+                </button>`;
             actionBtnHTML = `
                 <button class="driver-step-btn btn-trip" onclick="setOrderStatus('ON_TRIP')">
-                    <i class="fa-solid fa-motorcycle"></i> Mulai Perjalanan (Berangkat)
+                    <i class="fa-solid fa-motorcycle"></i> Mulai Perjalanan (Berangkat Mengantar)
                 </button>`;
         } else if (order.status === 'ON_TRIP') {
+            statusDescriptionText = '🏁 Driver Otw Mengantar ke Tujuan';
             navBtnHTML = `
-                <button class="btn-step-btn btn-nav-gmaps" onclick="openGoogleMapsNav(${order.dropoffLat}, ${order.dropoffLng})">
-                    <i class="fa-solid fa-location-arrow"></i> Navigasi Google Maps (Rute Tujuan)
+                <button class="btn-nav-gmaps" onclick="openGoogleMapsNav(${order.dropoffLat}, ${order.dropoffLng})">
+                    <i class="fa-solid fa-location-arrow"></i> Navigasi Google Maps (Rute Tujuan Akhir)
                 </button>`;
             actionBtnHTML = `
                 <button class="driver-step-btn btn-finish" onclick="setOrderStatus('FINISHED')">
@@ -3882,7 +3891,7 @@
                     <p><strong style="color:#eb5757;"><i class="fa-solid fa-location-dot"></i> Jemput:</strong> ${order.pickup}</p>
                     <p><strong style="color:#111;"><i class="fa-solid fa-flag-checkered"></i> Tujuan:</strong> ${order.dropoff}</p>
                     <p><strong><i class="fa-solid fa-note-sticky"></i> Catatan:</strong> ${order.note || '-'}</p>
-                    <p><strong>Status Order:</strong> <span style="color:var(--accent-blue); font-weight:bold;">${order.status === 'WAITING' ? 'Menunggu Konfirmasi Penumpang' : (order.status === 'HEADING_PICKUP' ? 'Menuju Titik Penjemputan' : 'Sedang Anda Proses')}</span></p>
+                    <p><strong>Status Order:</strong> <span style="color:var(--accent-blue); font-weight:bold;">${statusDescriptionText}</span></p>
                 </div>
                 ${order.status !== 'WAITING' ? waBtnHTML : ''}
                 ${navBtnHTML}
