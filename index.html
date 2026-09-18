@@ -3715,12 +3715,13 @@
         window.open(gmapsUrl, '_blank');
     }
 
-   function updatePassengerAppUI() {
+  function updatePassengerAppUI() {
         const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
         const statusBox = document.getElementById('driverStatusBox');
         const btnSend = document.getElementById('btnSendOrder');
         const btnCancel = document.getElementById('btnCancelOrder');
 
+        // Proteksi agar tidak error jika elemen belum ada di DOM
         if (!statusBox || !btnSend || !btnCancel) return;
 
         if (!order) {
@@ -3748,6 +3749,7 @@
         const floatingPanel = document.getElementById('floatingRadarPanel');
         const order = JSON.parse(localStorage.getItem('iqbike_active_order'));
 
+        // Proteksi agar tidak error jika elemen belum ada di DOM
         if (!container || !floatingPanel) return;
 
         if (!order) {
