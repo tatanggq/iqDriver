@@ -3778,42 +3778,6 @@
         `;
     }
 
-        updatePassengerWaInputUI();
-
-        if (!order || (order.deviceUuid && order.deviceUuid !== passengerDeviceUuid) || order.status === 'CANCELLED_BY_PASSENGER') {
-            btnSend.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Cari & Kirim Pesanan ke iqDriver`;
-            btnSend.disabled = false;
-            btnSend.classList.remove('btn-disabled');
-            btnCancel.style.display = 'none';
-
-            btnJemput.disabled = false;
-            pickupInput.disabled = false;
-            nameInput.disabled = false;
-            phoneInput.disabled = false;
-            noteInput.disabled = false;
-            dropoffInput.disabled = false;
-            }
-
-        if (order.status === 'WAITING') {
-            const countAccepted = order.acceptedDrivers ? order.acceptedDrivers.length : 0;
-            btnSend.innerHTML = `<i class="fa-solid fa-motorcycle"></i> Lihat Pilihan iqDriver Terdekat (${countAccepted} Mengajukan)`;
-            btnSend.disabled = false;
-            btnCancel.style.display = 'flex';
-        } else if (order.status !== 'WAITING') {
-            btnCancel.style.display = 'flex';
-            btnCancel.innerHTML = `<i class="fa-solid fa-xmark"></i> Batalkan Pesanan Ini`;
-            btnSend.innerHTML = `<i class="fa-brands fa-whatsapp"></i> Chat WhatsApp ke iqDriver (${order.assignedDriverWa})`;
-            btnSend.disabled = false;
-            btnSend.style.backgroundColor = 'var(--whatsapp-green)';
-        }
-
-        computedTotalFare = order.fare;
-        document.getElementById('fareText').innerText = `Rp ${order.fare.toLocaleString('id-ID')}`;
-        pickupCoords = L.latLng(order.pickupLat, order.pickupLng);
-        dropoffCoords = L.latLng(order.dropoffLat, order.dropoffLng);
-        renderFixedMarkers();
-    }
-
     function updateDriverAppUI() {
         const container = document.getElementById('orderListContainer');
         const floatingPanel = document.getElementById('floatingRadarPanel');
