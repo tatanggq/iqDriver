@@ -3857,6 +3857,16 @@
         }
     };
 </script>
+    // Memaksa sinkronisasi instan saat layar/split screen disentuh atau kembali aktif di iqDriver
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            console.log("Layar driver aktif kembali, menyinkronkan ulang data Firestore...");
+            // Panggil fungsi sinkronisasi atau pemantau order aktif driver di sini
+            if (typeof fetchActiveOrders === 'function') {
+                fetchActiveOrders();
+            }
+        }
+    });
 
 </body>
 </html>
